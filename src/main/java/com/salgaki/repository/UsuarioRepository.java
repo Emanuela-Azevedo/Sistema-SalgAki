@@ -1,10 +1,13 @@
 package com.salgaki.repository;
 
+import com.salgaki.model.Usuario;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.Optional;
 
-public class UsuarioRepository {
+@Repository
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    public Optional<Usuario> buscarPorUsername(String username) {
-        return Optional.empty();
-    }
+    Optional<Usuario> findByUsername(String username);
 }

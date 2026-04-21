@@ -3,8 +3,7 @@ package com.salgaki.dto;
 import lombok.Data;
 
 @Data
-public class LoginRequestDTO {
-
+public class UsuarioResponseDTO {
+    private Long id;
     private String username;
-    private String password;
 }

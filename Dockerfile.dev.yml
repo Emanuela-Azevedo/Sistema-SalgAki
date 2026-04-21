@@ -1,0 +1,10 @@
+FROM maven:3.9.11-amazoncorretto-21-alpine
+LABEL maintainer="luciana.dev"
+
+EXPOSE 8080
+
+RUN mkdir -p /home/salgaki
+
+COPY ./ /home/salgaki
+
+WORKDIR /home/salgaki
