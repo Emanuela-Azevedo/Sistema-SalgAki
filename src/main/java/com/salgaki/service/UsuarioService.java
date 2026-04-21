@@ -1,44 +1,44 @@
 package com.salgaki.service;
 
-import java.util.Optional;
-import java.util.Base64;
+import com.salgaki.model.Usuario;
+import com.salgaki.repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Service
 public class UsuarioService {
 
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioService(UsuarioRepository usuarioRepository) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public LoginResponseDTO autenticar(LoginRequestDTO request) {
-
-        Optional<Usuario> usuarioOpt = usuarioRepository.buscarPorUsername(request.getUsername());
-
-        // valida se encontrou usuário
-        if (usuarioOpt.isEmpty()) {
-            throw new RuntimeException("Usuário não encontrado");
+    /**
+     * Cria o único usuário do sistema.
+     * Se já existir algum usuário, lança exceção.
+     */
+    @Transactional
+    public Usuario criarUsuario(Usuario usuario) {
+        if (usuarioRepository.count() > 0) {
+            throw new IllegalStateException("Já existe um usuário cadastrado. Não é permitido criar mais.");
         }
 
-        Usuario usuario = usuarioOpt.get();
-
-        // valida senha
-        if (!usuario.getPassword().equals(request.getPassword())) {
-            throw new RuntimeException("Senha inválida");
-        }
-
-        // gerar token simples (mock)
-        String token = gerarToken(usuario);
-
-        LoginResponseDTO response = new LoginResponseDTO();
-        response.setToken(token);
-        response.setTipo("Bearer");
-
-        return response;
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+        return usuarioRepository.save(usuario);
     }
 
-    private String gerarToken(Usuario usuario) {
-        String raw = usuario.getUsername() + ":" + System.currentTimeMillis();
-        return Base64.getEncoder().encodeToString(raw.getBytes());
+    /**
+     * Busca o único usuário cadastrado.
+     */
+    @Transactional(readOnly = true)
+    public Usuario buscarUsuario() {
+        return usuarioRepository.findAll()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Nenhum usuário cadastrado."));
     }
 }

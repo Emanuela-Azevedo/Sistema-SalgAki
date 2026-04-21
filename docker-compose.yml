@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  backend:
+    stdin_open: true
+    tty: true
+    command: tail -f /dev/null
+    build:
+      context: .
+      dockerfile: Dockerfile.dev.yml
+    container_name: salgaki-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/home/salgaki/src
+      - ./pom.xml:/home/salgaki/pom.xml
+      - ./test-reports:/home/salgaki/target/surefire-reports
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/salgaki
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+  db:
+    image: postgres:16
+    container_name: salgaki-db
+    environment:
+      POSTGRES_DB: salgaki
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

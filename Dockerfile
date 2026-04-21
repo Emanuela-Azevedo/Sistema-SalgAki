@@ -1,10 +1,10 @@
-# Etapa 1 - build
-FROM maven:3.9.9-eclipse-temurin-21 AS build
+FROM maven:3.9.11-amazoncorretto-21-alpine
+LABEL maintainer="luciana.dev"
 
-WORKDIR /app
+EXPOSE 8080
 
-COPY pom.xml .
-RUN mvn dependency:go-offline
+RUN mkdir -p /home/salgaki
 
-COPY src ./src
-RUN mvn clean package -DskipTests
+COPY ./ /home/salgaki
+
+WORKDIR /home/salgaki
