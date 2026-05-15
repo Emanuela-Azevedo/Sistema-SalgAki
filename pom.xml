@@ -12,11 +12,11 @@
 		<relativePath/>
 	</parent>
 
-	<groupId>com.projetoDac</groupId>
-	<artifactId>feedback_alunos</artifactId>
+	<groupId>com.salgaki</groupId>
+	<artifactId>sistema-salgaki</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>feedback_alunos</name>
-	<description>Projeto de feedback de alunos com Spring Boot</description>
+	<name>sistema-salgaki</name>
+	<description>Sistema SalgAki</description>
 
 	<properties>
 		<java.version>21</java.version>
