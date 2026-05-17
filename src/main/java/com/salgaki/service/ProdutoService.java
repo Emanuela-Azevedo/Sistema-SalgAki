@@ -1,5 +1,6 @@
 package com.salgaki.service;
 
+import com.salgaki.model.Categoria;
 import com.salgaki.model.Produto;
 import com.salgaki.repository.ProdutoRepository;
 import org.springframework.stereotype.Service;
@@ -11,9 +12,11 @@ import java.util.List;
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
+    private final CategoriaService categoriaService;
 
-    public ProdutoService(ProdutoRepository produtoRepository) {
+    public ProdutoService(ProdutoRepository produtoRepository, CategoriaService categoriaService) {
         this.produtoRepository = produtoRepository;
+        this.categoriaService = categoriaService;
     }
 
     @Transactional
@@ -54,8 +57,9 @@ public class ProdutoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Produto> filtrarPorCategoria(String categoria) {
-        return produtoRepository.findByCategoriaIgnoreCase(categoria);
+    public List<Produto> filtrarPorCategoria(Long categoriaId) {
+        categoriaService.buscarPorId(categoriaId);
+        return produtoRepository.findByCategoria_Id(categoriaId);
     }
 
     @Transactional(readOnly = true)

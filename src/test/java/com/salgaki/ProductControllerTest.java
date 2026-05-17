@@ -2,7 +2,9 @@ package com.salgaki;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salgaki.dto.ProdutoCreateDTO;
+import com.salgaki.model.Categoria;
 import com.salgaki.model.Produto;
+import com.salgaki.repository.CategoriaRepository;
 import com.salgaki.repository.ProdutoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,30 +31,39 @@ class ProductControllerTest {
     private ProdutoRepository produtoRepository;
 
     @Autowired
+    private CategoriaRepository categoriaRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
+
+    private Categoria categoriaSalgado;
+    private Categoria categoriaDoce;
 
     @BeforeEach
     void setUp() {
         produtoRepository.deleteAll();
+        categoriaRepository.deleteAll();
+        categoriaSalgado = categoriaRepository.save(new Categoria(null, "Salgado"));
+        categoriaDoce = categoriaRepository.save(new Categoria(null, "Doce"));
     }
 
     @Test
     @WithMockUser
     void deveCriarProduto() throws Exception {
-        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", 5.0, 10, "Salgado");
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", 5.0, 10, categoriaSalgado.getId());
 
         mockMvc.perform(post("/products")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nome").value("Coxinha"))
-                .andExpect(jsonPath("$.categoria").value("Salgado"));
+                .andExpect(jsonPath("$.categoria.nome").value("Salgado"));
     }
 
     @Test
     @WithMockUser
     void deveListarProdutos() throws Exception {
-        produtoRepository.save(new Produto(null, "Pastel", 4.0, 20, "Salgado"));
+        produtoRepository.save(new Produto(null, "Pastel", 4.0, 20, categoriaSalgado));
 
         mockMvc.perform(get("/products"))
                 .andExpect(status().isOk())
@@ -62,7 +73,7 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveBuscarPorNome() throws Exception {
-        produtoRepository.save(new Produto(null, "Empada", 6.0, 15, "Salgado"));
+        produtoRepository.save(new Produto(null, "Empada", 6.0, 15, categoriaSalgado));
 
         mockMvc.perform(get("/products").param("nome", "emp"))
                 .andExpect(status().isOk())
@@ -72,9 +83,9 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveFiltrarPorCategoria() throws Exception {
-        produtoRepository.save(new Produto(null, "Brigadeiro", 3.0, 30, "Doce"));
+        produtoRepository.save(new Produto(null, "Brigadeiro", 3.0, 30, categoriaDoce));
 
-        mockMvc.perform(get("/products").param("categoria", "Doce"))
+        mockMvc.perform(get("/products").param("categoriaId", categoriaDoce.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nome").value("Brigadeiro"));
     }
@@ -82,8 +93,8 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveAtualizarProduto() throws Exception {
-        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, "Salgado"));
-        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha G", 7.0, 5, "Salgado");
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, categoriaSalgado));
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha G", 7.0, 5, categoriaSalgado.getId());
 
         mockMvc.perform(put("/products/" + salvo.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -95,7 +106,7 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveDeletarProduto() throws Exception {
-        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, "Salgado"));
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, categoriaSalgado));
 
         mockMvc.perform(delete("/products/" + salvo.getId()))
                 .andExpect(status().isNoContent());
@@ -104,8 +115,8 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveListarEmOrdemAlfabetica() throws Exception {
-        produtoRepository.save(new Produto(null, "Pastel", 4.0, 20, "Salgado"));
-        produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, "Salgado"));
+        produtoRepository.save(new Produto(null, "Pastel", 4.0, 20, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, categoriaSalgado));
 
         mockMvc.perform(get("/products").param("alfabetica", "true"))
                 .andExpect(status().isOk())

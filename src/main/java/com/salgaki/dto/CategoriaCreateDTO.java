@@ -1,5 +1,6 @@
 package com.salgaki.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,11 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProdutoResponseDTO {
+public class CategoriaCreateDTO {
 
-    private Long id;
+    @NotBlank
     private String nome;
-    private Double preco;
-    private Integer quantidade;
-    private CategoriaResponseDTO categoria;
 }

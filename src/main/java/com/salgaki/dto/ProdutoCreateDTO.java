@@ -24,6 +24,6 @@ public class ProdutoCreateDTO {
     @PositiveOrZero
     private Integer quantidade;
 
-    @NotBlank
-    private String categoria;
+    @NotNull
+    private Long categoriaId;
 }
