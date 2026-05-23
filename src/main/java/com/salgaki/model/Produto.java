@@ -22,8 +22,8 @@ public class Produto {
     @Column(nullable = false)
     private Double preco;
 
-    @Column(nullable = false)
-    private Integer quantidade;
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private Integer quantidade = 0;
 
     @ManyToOne
     @JoinColumn(name = "categoria_id", nullable = false)

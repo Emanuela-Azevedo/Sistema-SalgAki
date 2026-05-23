@@ -16,19 +16,15 @@ public class JwtUserDetailsService implements UserDetailsService {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService;
 
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
-
         return new JwtUserDetails(usuario);
     }
-    public JwtToken getTokenAuthenticated(String username) {
-        Usuario usuario = usuarioRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
-        JwtToken token = JwtUtils.createToken(usuario.getUsername());
 
-        return token;
+    public JwtToken getTokenAuthenticated(String username) {
+        loadUserByUsername(username);
+        return JwtUtils.createToken(username);
     }
 }

@@ -11,17 +11,16 @@ public class ProdutoMapper {
         Produto produto = new Produto();
         produto.setNome(dto.getNome());
         produto.setPreco(dto.getPreco());
-        produto.setQuantidade(dto.getQuantidade());
         produto.setCategoria(categoria);
         return produto;
     }
 
-    public static ProdutoResponseDTO toDto(Produto produto) {
+    public static ProdutoResponseDTO toDto(Produto produto, int quantidade) {
         return new ProdutoResponseDTO(
                 produto.getId(),
                 produto.getNome(),
                 produto.getPreco(),
-                produto.getQuantidade(),
+                quantidade,
                 CategoriaMapper.toDto(produto.getCategoria())
         );
     }

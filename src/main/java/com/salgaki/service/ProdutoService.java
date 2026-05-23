@@ -3,6 +3,7 @@ package com.salgaki.service;
 import com.salgaki.model.Categoria;
 import com.salgaki.model.Produto;
 import com.salgaki.repository.ProdutoRepository;
+import com.salgaki.service.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,7 @@ public class ProdutoService {
     @Transactional(readOnly = true)
     public Produto buscarPorId(Long id) {
         return produtoRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Produto não encontrado: " + id));
     }
 
     @Transactional
@@ -40,7 +41,6 @@ public class ProdutoService {
         Produto produto = buscarPorId(id);
         produto.setNome(dados.getNome());
         produto.setPreco(dados.getPreco());
-        produto.setQuantidade(dados.getQuantidade());
         produto.setCategoria(dados.getCategoria());
         return produtoRepository.save(produto);
     }

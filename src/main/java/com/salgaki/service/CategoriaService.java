@@ -2,6 +2,8 @@ package com.salgaki.service;
 
 import com.salgaki.model.Categoria;
 import com.salgaki.repository.CategoriaRepository;
+import com.salgaki.service.exception.EntidadeDuplicadaException;
+import com.salgaki.service.exception.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,9 @@ public class CategoriaService {
 
     @Transactional
     public Categoria criar(Categoria categoria) {
+        if (categoriaRepository.findByNomeIgnoreCase(categoria.getNome()).isPresent()) {
+            throw new EntidadeDuplicadaException("Categoria já existe: " + categoria.getNome());
+        }
         return categoriaRepository.save(categoria);
     }
 
@@ -29,12 +34,15 @@ public class CategoriaService {
     @Transactional(readOnly = true)
     public Categoria buscarPorId(Long id) {
         return categoriaRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Categoria não encontrada: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Categoria não encontrada: " + id));
     }
 
     @Transactional
     public Categoria atualizar(Long id, Categoria dados) {
         Categoria categoria = buscarPorId(id);
+        categoriaRepository.findByNomeIgnoreCase(dados.getNome())
+                .filter(c -> !c.getId().equals(id))
+                .ifPresent(c -> { throw new EntidadeDuplicadaException("Categoria já existe: " + dados.getNome()); });
         categoria.setNome(dados.getNome());
         return categoriaRepository.save(categoria);
     }

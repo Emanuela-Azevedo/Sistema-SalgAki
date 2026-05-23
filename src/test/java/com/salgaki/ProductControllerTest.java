@@ -50,9 +50,9 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveCriarProduto() throws Exception {
-        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", 5.0, 10, categoriaSalgado.getId());
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", 5.0, categoriaSalgado.getId());
 
-        mockMvc.perform(post("/products")
+        mockMvc.perform(post("/produtos")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isCreated())
@@ -63,9 +63,9 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveListarProdutos() throws Exception {
-        produtoRepository.save(new Produto(null, "Pastel", 4.0, 20, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Pastel", 4.0, categoriaSalgado));
 
-        mockMvc.perform(get("/products"))
+        mockMvc.perform(get("/produtos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nome").value("Pastel"));
     }
@@ -73,9 +73,9 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveBuscarPorNome() throws Exception {
-        produtoRepository.save(new Produto(null, "Empada", 6.0, 15, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Empada", 6.0, categoriaSalgado));
 
-        mockMvc.perform(get("/products").param("nome", "emp"))
+        mockMvc.perform(get("/produtos").param("nome", "emp"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nome").value("Empada"));
     }
@@ -83,9 +83,9 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveFiltrarPorCategoria() throws Exception {
-        produtoRepository.save(new Produto(null, "Brigadeiro", 3.0, 30, categoriaDoce));
+        produtoRepository.save(new Produto(null, "Brigadeiro", 3.0, categoriaDoce));
 
-        mockMvc.perform(get("/products").param("categoriaId", categoriaDoce.getId().toString()))
+        mockMvc.perform(get("/produtos").param("categoriaId", categoriaDoce.getId().toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nome").value("Brigadeiro"));
     }
@@ -93,10 +93,10 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveAtualizarProduto() throws Exception {
-        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, categoriaSalgado));
-        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha G", 7.0, 5, categoriaSalgado.getId());
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha G", 7.0, categoriaSalgado.getId());
 
-        mockMvc.perform(put("/products/" + salvo.getId())
+        mockMvc.perform(put("/produtos/" + salvo.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -106,21 +106,83 @@ class ProductControllerTest {
     @Test
     @WithMockUser
     void deveDeletarProduto() throws Exception {
-        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, categoriaSalgado));
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
 
-        mockMvc.perform(delete("/products/" + salvo.getId()))
+        mockMvc.perform(delete("/produtos/" + salvo.getId()))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @WithMockUser
     void deveListarEmOrdemAlfabetica() throws Exception {
-        produtoRepository.save(new Produto(null, "Pastel", 4.0, 20, categoriaSalgado));
-        produtoRepository.save(new Produto(null, "Coxinha", 5.0, 10, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Pastel", 4.0, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
 
-        mockMvc.perform(get("/products").param("alfabetica", "true"))
+        mockMvc.perform(get("/produtos").param("alfabetica", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nome").value("Coxinha"))
                 .andExpect(jsonPath("$[1].nome").value("Pastel"));
+    }
+
+    @Test
+    @WithMockUser
+    void deveRetornarProdutoPorId() throws Exception {
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
+
+        mockMvc.perform(get("/produtos/" + salvo.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Coxinha"))
+                .andExpect(jsonPath("$.preco").value(5.0));
+    }
+
+    @Test
+    @WithMockUser
+    void deveRetornar404QuandoProdutoNaoEncontrado() throws Exception {
+        mockMvc.perform(get("/produtos/999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    void deveRetornar400AoCriarProdutoSemNome() throws Exception {
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("", 5.0, categoriaSalgado.getId());
+
+        mockMvc.perform(post("/produtos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    void deveRetornar400AoCriarProdutoComPrecoNegativo() throws Exception {
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", -1.0, categoriaSalgado.getId());
+
+        mockMvc.perform(post("/produtos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    void deveRetornar400AoCriarProdutoSemCategoria() throws Exception {
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", 5.0, null);
+
+        mockMvc.perform(post("/produtos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    void deveRetornar404AoCriarProdutoComCategoriaInexistente() throws Exception {
+        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", 5.0, 999L);
+
+        mockMvc.perform(post("/produtos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isNotFound());
     }
 }
