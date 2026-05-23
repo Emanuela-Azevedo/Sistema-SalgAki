@@ -33,7 +33,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         log.info("JwtAuthorizationFilter interceptou requisição para: {}", path);
 
         // Ignora autenticação para endpoints liberados
-        if (path.startsWith("/api/auth")) {
+        if (path.startsWith("/auth")) {
             log.info("Liberado sem autenticação: {}", path);
             filterChain.doFilter(request, response);
             return;
