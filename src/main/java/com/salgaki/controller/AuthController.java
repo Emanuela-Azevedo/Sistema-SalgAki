@@ -40,9 +40,10 @@ public class AuthController {
 
             // Monta a resposta simples: só token e username
             LoginResponseDTO response = new LoginResponseDTO(
-                    token.getToken(),
-                    dto.getUsername()
+                    dto.getUsername(),
+                    token.getToken()
             );
+
 
             return ResponseEntity.ok(response);
 

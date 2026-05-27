@@ -28,4 +28,7 @@ public class Produto {
     @ManyToOne
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
+
+    public Produto(Object o, String coxinha, double v, Categoria categoria) {
+    }
 }
