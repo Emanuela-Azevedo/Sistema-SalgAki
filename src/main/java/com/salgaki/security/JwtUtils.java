@@ -84,9 +84,13 @@ public class JwtUtils {
     }
 
     private static String refactorToken(String token){
-        if(token.contains(JWT_BEARER)){
-            return token.substring(JWT_BEARER.length());
+        if (token == null) {
+            return null;
         }
-        return token;
+        String trimmed = token.trim();
+        if (trimmed.startsWith(JWT_BEARER)) {
+            return trimmed.substring(JWT_BEARER.length()).trim();
+        }
+        return trimmed;
     }
 }

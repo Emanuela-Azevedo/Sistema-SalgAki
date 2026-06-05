@@ -9,8 +9,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 
 @RequiredArgsConstructor
 @RestController
@@ -23,5 +23,26 @@ public class UsuarioController {
     public ResponseEntity<UsuarioResponseDTO> criarUsuario(@RequestBody @Valid UsuarioCreateDTO dto) {
         Usuario salvo = usuarioService.criarUsuario(UsuarioMapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioMapper.toResponseDTO(salvo));
+    }
+
+    
+    @GetMapping
+    public ResponseEntity<UsuarioResponseDTO> obterUsuario() {
+        Usuario usuario = usuarioService.buscarUsuario();
+        return ResponseEntity.ok(UsuarioMapper.toResponseDTO(usuario));
+    }
+
+    @PutMapping("/senha")
+    public ResponseEntity<UsuarioResponseDTO> atualizarSenha(@RequestParam String novaSenha) {
+        if (novaSenha == null || novaSenha.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+        Usuario atualizado = usuarioService.atualizarSenha(novaSenha);
+        return ResponseEntity.ok(UsuarioMapper.toResponseDTO(atualizado));
+    }
+
+    @GetMapping("/existe")
+    public ResponseEntity<Boolean> usuarioExiste() {
+        return ResponseEntity.ok(usuarioService.existeUsuario());
     }
 }

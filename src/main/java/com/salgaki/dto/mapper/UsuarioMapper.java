@@ -6,7 +6,6 @@ import com.salgaki.model.Usuario;
 
 public class UsuarioMapper {
 
-    // DTO → Entity
     public static Usuario toEntity(UsuarioCreateDTO dto) {
         Usuario usuario = new Usuario();
         usuario.setUsername(dto.getUsername());
@@ -14,7 +13,6 @@ public class UsuarioMapper {
         return usuario;
     }
 
-    // Entity → ResponseDTO
     public static UsuarioResponseDTO toResponseDTO(Usuario usuario) {
         UsuarioResponseDTO dto = new UsuarioResponseDTO();
         dto.setId(usuario.getId());

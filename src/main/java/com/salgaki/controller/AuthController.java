@@ -3,11 +3,13 @@ package com.salgaki.controller;
 import com.salgaki.dto.LoginRequestDTO;
 import com.salgaki.dto.LoginResponseDTO;
 import com.salgaki.security.JwtToken;
+import com.salgaki.security.JwtUtils;
 import com.salgaki.security.JwtUserDetailsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,17 +37,16 @@ public class AuthController {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // Gera o token apenas com o username
             JwtToken token = userDetailsService.getTokenAuthenticated(dto.getUsername());
 
-            // Monta a resposta simples: só token e username
             LoginResponseDTO response = new LoginResponseDTO(
                     dto.getUsername(),
                     token.getToken()
             );
 
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.AUTHORIZATION, JwtUtils.JWT_BEARER + " " + token.getToken())
+                    .body(response);
 
         } catch (AuthenticationException e) {
             return ResponseEntity
