@@ -1,6 +1,7 @@
 package com.salgaki.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,19 +17,16 @@ public class Produto {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @Column(nullable = false)
     private String nome;
 
+    @NotNull
     @Column(nullable = false)
     private Double preco;
 
-    @Column(nullable = false, columnDefinition = "integer default 0")
-    private Integer quantidade = 0;
-
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
-
-    public Produto(Object o, String coxinha, double v, Categoria categoria) {
-    }
 }

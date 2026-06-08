@@ -3,6 +3,7 @@ package com.salgaki.dto.mapper;
 import com.salgaki.dto.ProdutoCreateDTO;
 import com.salgaki.dto.ProdutoResponseDTO;
 import com.salgaki.model.Categoria;
+import com.salgaki.model.Estoque;
 import com.salgaki.model.Produto;
 
 public class ProdutoMapper {
@@ -15,12 +16,11 @@ public class ProdutoMapper {
         return produto;
     }
 
-    public static ProdutoResponseDTO toDto(Produto produto, int quantidade) {
+    public static ProdutoResponseDTO toDto(Produto produto) {
         return new ProdutoResponseDTO(
                 produto.getId(),
                 produto.getNome(),
                 produto.getPreco(),
-                quantidade,
                 CategoriaMapper.toDto(produto.getCategoria())
         );
     }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/cardapio")
+@RequestMapping("/cardapio")
 public class CardapioController {
 
     private final WhatsAppService whatsAppService;
@@ -21,13 +21,15 @@ public class CardapioController {
     public ResponseEntity<String> enviarCardapioWhatsApp(
             @RequestBody @Valid CardapioWhatsAppDTO dto) {
         try {
-            whatsAppService.enviarCardapio(dto.getNumeroWhatsApp());
-            return ResponseEntity.ok("Cardápio enviado com sucesso para " + dto.getNumeroWhatsApp());
+            // ✅ Em sandbox, envia texto simples
+            whatsAppService.enviarMensagemTexto(dto.getNumeroWhatsApp());
+
+            return ResponseEntity.ok("Mensagem enviada com sucesso para " + dto.getNumeroWhatsApp());
         } catch (Exception e) {
-            log.error("Erro ao enviar cardápio", e);
+            log.error("Erro ao enviar mensagem", e);
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao enviar cardápio: " + e.getMessage());
+                    .body("Erro ao enviar mensagem: " + e.getMessage());
         }
     }
 }

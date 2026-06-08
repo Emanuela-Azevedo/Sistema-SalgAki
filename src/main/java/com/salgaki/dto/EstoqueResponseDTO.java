@@ -1,18 +1,18 @@
 package com.salgaki.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProdutoResponseDTO {
-
+public class EstoqueResponseDTO {
     private Long id;
-    private String nome;
-    private Double preco;
-    private CategoriaResponseDTO categoria;
-
+    private String produtoNome;
+    private Integer quantidade;
+    private String dataValidade;
 }
+
+

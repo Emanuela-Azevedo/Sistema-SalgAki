@@ -5,11 +5,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class LoginRequestDTO {
-
-    private String username;
-    private String password;
-
+@NoArgsConstructor
+public class ItemCardapioDTO {
+    private String nome;
+    private Double preco;
 }
+

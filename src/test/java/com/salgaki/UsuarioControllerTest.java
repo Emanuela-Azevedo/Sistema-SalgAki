@@ -1,48 +1,45 @@
 package com.salgaki;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.salgaki.dto.CardapioWhatsAppDTO;
 import com.salgaki.dto.LoginRequestDTO;
+import com.salgaki.dto.UsuarioCreateDTO;
 import com.salgaki.model.Usuario;
 import com.salgaki.repository.UsuarioRepository;
-import com.salgaki.service.WhatsAppService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CardapioControllerTest {
+class UsuarioControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PasswordEncoder passwordEncoder;
 
-    @MockBean
-    private WhatsAppService whatsAppService;
-
     private String token;
 
     @BeforeEach
     void setUp() throws Exception {
         usuarioRepository.deleteAll();
+
+        // cria usuário inicial com senha codificada
         Usuario usuario = new Usuario(null, "luciana", passwordEncoder.encode("senha123"));
         usuarioRepository.save(usuario);
 
+        // login via AuthController
         LoginRequestDTO loginRequest = new LoginRequestDTO("luciana", "senha123");
+
         String response = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
@@ -55,36 +52,38 @@ class CardapioControllerTest {
     }
 
     @Test
-    void deveRetornarSucessoAoEnviarMensagemTextoSandbox() throws Exception {
-        String numero = "5583987847955";
-        CardapioWhatsAppDTO dto = new CardapioWhatsAppDTO();
-        dto.setNumeroWhatsApp(numero);
-
-        Mockito.when(whatsAppService.enviarMensagemTexto(numero))
-                .thenReturn("{\"messages\":[{\"id\":\"wamid.HBg...\"}]}");
-
-        mockMvc.perform(post("/cardapio/enviar-whatsapp")
-                        .header("Authorization", "Bearer " + token) // ✅ agora com JWT
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+    void deveObterUsuario() throws Exception {
+        mockMvc.perform(get("/usuario")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Mensagem enviada com sucesso para " + numero));
+                .andExpect(jsonPath("$.username").value("luciana"));
     }
 
     @Test
-    void deveRetornarErroQuandoWhatsAppFalhar() throws Exception {
-        String numero = "5583987847955";
-        CardapioWhatsAppDTO dto = new CardapioWhatsAppDTO();
-        dto.setNumeroWhatsApp(numero);
+    void deveAtualizarSenha() throws Exception {
+        mockMvc.perform(put("/usuario/senha")
+                        .param("novaSenha", "novaSenha456")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("luciana"));
+    }
 
-        Mockito.when(whatsAppService.enviarMensagemTexto(numero))
-                .thenThrow(new RuntimeException("Falha no WhatsApp"));
+    @Test
+    void deveVerificarSeUsuarioExiste() throws Exception {
+        mockMvc.perform(get("/usuario/existe")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+    }
 
-        mockMvc.perform(post("/cardapio/enviar-whatsapp")
-                        .header("Authorization", "Bearer " + token) // ✅ JWT também aqui
+    @Test
+    void naoDevePermitirCriarSegundoUsuario() throws Exception {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("outroUser", "senha789");
+
+        mockMvc.perform(post("/usuario")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().string("Erro ao enviar mensagem: Falha no WhatsApp"));
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isConflict());
     }
 }

@@ -13,6 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @EnableMethodSecurity(prePostEnabled = true)
 @Configuration
@@ -28,6 +30,10 @@ public class SpringSecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/categorias/**").authenticated()
                         .requestMatchers("/produtos/**").authenticated()
+                        .requestMatchers("/usuario/**").authenticated()
+                        .requestMatchers("/movimentacoes/**").authenticated()
+                        .requestMatchers("/estoques/**").authenticated()
+                        .requestMatchers("/cardapio/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -53,5 +59,15 @@ public class SpringSecurityConfig {
     @Bean
     public JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint() {
         return new JwtAuthenticationEntryPoint();
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
+    public WebClient webClient(WebClient.Builder builder) {
+        return builder.build();
     }
 }

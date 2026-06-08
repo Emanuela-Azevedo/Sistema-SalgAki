@@ -1,0 +1,16 @@
+package com.salgaki.dto.mapper;
+
+import com.salgaki.dto.EstoqueResponseDTO;
+import com.salgaki.model.Estoque;
+
+public class EstoqueMapper {
+
+    public static EstoqueResponseDTO toDto(Estoque estoque) {
+        return new EstoqueResponseDTO(
+                estoque.getId(),
+                estoque.getProduto().getNome(),
+                estoque.getQuantidade(),
+                estoque.getDataValidade() != null ? estoque.getDataValidade().toString() : null
+        );
+    }
+}

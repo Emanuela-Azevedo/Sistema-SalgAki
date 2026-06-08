@@ -1,16 +1,18 @@
 package com.salgaki.service;
 
-import com.salgaki.dto.RelatorioMovimentacaoDTO;
-import com.salgaki.dto.RelatorioMovimentacaoDTO.ItemMovimentacaoDTO;
+import com.salgaki.model.Estoque;
 import com.salgaki.model.MovimentacaoEstoque;
-import com.salgaki.model.MovimentacaoEstoque.TipoMovimentacao;
 import com.salgaki.model.Produto;
-import com.salgaki.repository.MovimentacaoEstoqueRepository;
+import com.salgaki.model.TipoMovimentacao;
+import com.salgaki.repository.EstoqueRepository;
+import com.salgaki.repository.MovimentacaoRepository;
 import com.salgaki.repository.ProdutoRepository;
 import com.salgaki.service.exception.EstoqueInsuficienteException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,64 +21,69 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EstoqueService {
 
-    private static final int LIMITE_ESTOQUE_BAIXO = 5;
-
-    private final MovimentacaoEstoqueRepository movimentacaoRepository;
+    private final EstoqueRepository estoqueRepository;
     private final ProdutoRepository produtoRepository;
-    private final ProdutoService produtoService;
+    private final MovimentacaoRepository movimentacaoRepository;
 
     @Transactional
-    public int movimentar(Long produtoId, TipoMovimentacao tipo, Integer quantidade) {
-        Produto produto = produtoService.buscarPorId(produtoId);
+    public Estoque criarEstoque(Produto produto) {
+        Estoque estoque = new Estoque();
+        estoque.setProduto(produto);
+        estoque.setQuantidade(0); // inicia sempre com 0
+        return estoqueRepository.save(estoque);
+    }
 
-        if (tipo == TipoMovimentacao.SAIDA) {
-            int saldoAtual = calcularSaldo(produtoId);
-            if (saldoAtual < quantidade) {
-                throw new EstoqueInsuficienteException(saldoAtual);
-            }
+    @Transactional
+    public Estoque adicionarEstoque(Long produtoId, Integer quantidade) {
+        Estoque estoque = estoqueRepository.findByProdutoId(produtoId)
+                .orElseThrow(() -> new RuntimeException("Estoque não encontrado para produto " + produtoId));
+
+        estoque.setQuantidade(estoque.getQuantidade() + quantidade);
+
+        // registrar movimentação
+        MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
+                null,
+                estoque,
+                quantidade,
+                TipoMovimentacao.ENTRADA,
+                LocalDateTime.now()
+        );
+        movimentacaoRepository.save(movimentacao);
+
+        return estoqueRepository.save(estoque);
+    }
+
+    @Transactional
+    public Estoque removerEstoque(Long produtoId, Integer quantidade) {
+        Estoque estoque = estoqueRepository.findByProdutoId(produtoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Estoque não encontrado para produto " + produtoId));
+
+        if (estoque.getQuantidade() < quantidade) {
+            throw new EstoqueInsuficienteException("Quantidade insuficiente em estoque");
         }
 
-        MovimentacaoEstoque mov = new MovimentacaoEstoque();
-        mov.setProduto(produto);
-        mov.setTipo(tipo);
-        mov.setQuantidade(quantidade);
-        mov.setDataHora(LocalDateTime.now());
-        movimentacaoRepository.save(mov);
+        estoque.setQuantidade(estoque.getQuantidade() - quantidade);
 
-        return calcularSaldo(produtoId);
+        MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
+                null,
+                estoque,
+                quantidade,
+                TipoMovimentacao.SAIDA,
+                LocalDateTime.now()
+        );
+        movimentacaoRepository.save(movimentacao);
+
+        return estoqueRepository.save(estoque);
     }
 
-    @Transactional(readOnly = true)
-    public int calcularSaldo(Long produtoId) {
-        return movimentacaoRepository.calcularSaldo(produtoId);
+    public Estoque consultarEstoque(Long produtoId) {
+        return estoqueRepository.findByProdutoId(produtoId)
+                .orElseThrow(() -> new RuntimeException("Estoque não encontrado para produto " + produtoId));
+    }
+    public List<Estoque> listarEstoquesBaixos() {
+        // exemplo: limite fixo de 5 unidades
+        return estoqueRepository.findByQuantidadeLessThan(5);
     }
 
-    @Transactional(readOnly = true)
-    public List<Produto> listarEstoqueBaixo() {
-        return produtoRepository.findAll().stream()
-                .filter(p -> calcularSaldo(p.getId()) <= LIMITE_ESTOQUE_BAIXO)
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public RelatorioMovimentacaoDTO gerarRelatorio(Long produtoId, LocalDateTime de, LocalDateTime ate) {
-        Produto produto = produtoService.buscarPorId(produtoId);
-
-        List<MovimentacaoEstoque> movs = movimentacaoRepository
-                .findByProdutoIdAndDataHoraBetweenOrderByDataHoraAsc(produtoId, de, ate);
-
-        int totalEntradas = movs.stream()
-                .filter(m -> m.getTipo() == TipoMovimentacao.ENTRADA)
-                .mapToInt(MovimentacaoEstoque::getQuantidade).sum();
-
-        int totalSaidas = movs.stream()
-                .filter(m -> m.getTipo() == TipoMovimentacao.SAIDA)
-                .mapToInt(MovimentacaoEstoque::getQuantidade).sum();
-
-        List<ItemMovimentacaoDTO> itens = movs.stream()
-                .map(m -> new ItemMovimentacaoDTO(m.getTipo().name(), m.getQuantidade(), m.getDataHora()))
-                .toList();
-
-        return new RelatorioMovimentacaoDTO(produto.getNome(), totalEntradas, totalSaidas, totalEntradas - totalSaidas, itens);
-    }
 }

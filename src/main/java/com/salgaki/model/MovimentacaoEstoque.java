@@ -1,5 +1,6 @@
 package com.salgaki.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,21 +19,18 @@ public class MovimentacaoEstoque {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "produto_id", nullable = false)
-    private Produto produto;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TipoMovimentacao tipo;
+    @ManyToOne
+    @JoinColumn(name = "estoque_id")
+    private Estoque estoque;
 
     @Column(nullable = false)
     private Integer quantidade;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private LocalDateTime dataHora;
+    private TipoMovimentacao tipo; // ENTRADA ou SAIDA
 
-    public enum TipoMovimentacao {
-        ENTRADA, SAIDA
-    }
+    @Column(name = "data_movimentacao", nullable = false)
+    private LocalDateTime dataMovimentacao = LocalDateTime.now();
+
 }
