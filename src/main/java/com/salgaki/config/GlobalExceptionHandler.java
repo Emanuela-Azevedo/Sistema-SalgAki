@@ -1,7 +1,8 @@
 package com.salgaki.config;
 
 import com.salgaki.service.exception.EntidadeDuplicadaException;
-import com.salgaki.service.exception.EntityNotFoundException;
+import com.salgaki.service.exception.EntidadeEmUsoException;
+import com.salgaki.service.exception.EntidadeNaoEncontradaException;
 import com.salgaki.service.exception.EstoqueInsuficienteException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,8 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleNotFound(EntityNotFoundException ex) {
+    @ExceptionHandler(EntidadeNaoEncontradaException.class)
+    public ResponseEntity<String> handleNotFound(EntidadeNaoEncontradaException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
@@ -50,6 +51,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrity(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro de integridade nos dados enviados.");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+    @ExceptionHandler(EntidadeEmUsoException.class)
+    public ResponseEntity<String> handleEntidadeEmUso(EntidadeEmUsoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 }

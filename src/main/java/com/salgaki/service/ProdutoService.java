@@ -1,10 +1,14 @@
 package com.salgaki.service;
 
+import com.salgaki.model.Estoque;
 import com.salgaki.model.Produto;
+import com.salgaki.repository.EstoqueRepository;
 import com.salgaki.repository.ProdutoRepository;
+import com.salgaki.service.exception.EntidadeEmUsoException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -14,6 +18,8 @@ import java.util.List;
 public class ProdutoService {
 
     private final ProdutoRepository produtoRepository;
+    private final EstoqueRepository estoqueRepository;
+
 
     public Produto criar(Produto produto) {
         return produtoRepository.save(produto);
@@ -36,7 +42,25 @@ public class ProdutoService {
         return produtoRepository.save(existente);
     }
 
+    @Transactional
     public void deletar(Long id) {
-        produtoRepository.deleteById(id);
+        Produto produto = buscarPorId(id);
+
+        Estoque estoque = estoqueRepository.findByProdutoId(id)
+                .orElse(null);
+
+        if (estoque != null && estoque.getQuantidade() != null && estoque.getQuantidade() > 0) {
+            throw new EntidadeEmUsoException("Produto não pode ser excluído, pois ainda existem itens em estoque.");
+        }
+
+        if (estoque != null && estoque.getMovimentacoes() != null && !estoque.getMovimentacoes().isEmpty()) {
+            throw new EntidadeEmUsoException("Produto não pode ser excluído, pois possui movimentações de estoque.");
+        }
+
+        if (estoque != null) {
+            estoqueRepository.delete(estoque);
+        }
+
+        produtoRepository.delete(produto);
     }
 }

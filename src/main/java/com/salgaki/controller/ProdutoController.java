@@ -30,12 +30,10 @@ public class ProdutoController {
         Categoria categoria = categoriaService.buscarPorId(dto.getCategoriaId());
         Produto produto = produtoService.criar(ProdutoMapper.toProduto(dto, categoria));
 
-        // cria estoque inicial = 0 para o produto
-        estoqueService.criarEstoque(produto);
-
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ProdutoMapper.toDto(produto));
     }
+
 
     @GetMapping
     public ResponseEntity<List<ProdutoResponseDTO>> listar(
@@ -64,7 +62,7 @@ public class ProdutoController {
         }
 
         return ResponseEntity.ok(produtos.stream()
-                .map((Produto produto) -> ProdutoMapper.toDto(produto))
+                .map(ProdutoMapper::toDto)
                 .toList());
     }
 
@@ -85,19 +83,5 @@ public class ProdutoController {
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         produtoService.deletar(id);
         return ResponseEntity.noContent().build();
-    }
-
-    // Entrada de estoque
-    @PutMapping("/{id}/entrada")
-    public ResponseEntity<Void> entradaEstoque(@PathVariable Long id, @RequestParam Integer quantidade) {
-        estoqueService.adicionarEstoque(id, quantidade);
-        return ResponseEntity.ok().build();
-    }
-
-    // Saída de estoque
-    @PutMapping("/{id}/saida")
-    public ResponseEntity<Void> saidaEstoque(@PathVariable Long id, @RequestParam Integer quantidade) {
-        estoqueService.removerEstoque(id, quantidade);
-        return ResponseEntity.ok().build();
     }
 }

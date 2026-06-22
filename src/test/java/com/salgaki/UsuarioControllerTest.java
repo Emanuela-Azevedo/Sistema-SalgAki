@@ -34,7 +34,7 @@ class UsuarioControllerTest {
         usuarioRepository.deleteAll();
 
         // cria usuário inicial com senha codificada
-        Usuario usuario = new Usuario(null, "luciana", passwordEncoder.encode("senha123"));
+        Usuario usuario = new Usuario(null, 1, "luciana", passwordEncoder.encode("senha123"));
         usuarioRepository.save(usuario);
 
         // login via AuthController

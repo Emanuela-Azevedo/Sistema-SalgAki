@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import io.jsonwebtoken.security.Keys;
 
 import java.security.Key;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -22,9 +21,7 @@ public class JwtUtils {
     public static final String JWT_AUTHORIZATION = "Authorization";
     public static final String JWT_BEARER = "Bearer";
     public static final String SECRET_KEY = "0123456789-0123456789-0123456789";
-    public static final Long EXPIRE_DAYS = 0L;
-    public static final Long EXPIRE_HOURS = 0L;
-    public static final Long EXPIRE_MINUTES = Duration.ofHours(8).toMillis();
+    public static final Long EXPIRE_HOURS = 8L;
 
     private static Key generatyKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
@@ -32,7 +29,7 @@ public class JwtUtils {
 
     private static Date toExpireDate(Date start) {
         LocalDateTime dateTime = start.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-        LocalDateTime and = dateTime.plusDays(EXPIRE_DAYS).plusHours(EXPIRE_HOURS).plusMinutes(EXPIRE_MINUTES);
+        LocalDateTime and = dateTime.plusHours(EXPIRE_HOURS);
         return Date.from(and.atZone(ZoneId.systemDefault()).toInstant());
     }
 
@@ -53,13 +50,11 @@ public class JwtUtils {
         return new JwtToken(token);
     }
 
-
     private static Claims getClaimsFromToken(String token){
         try{
             return Jwts.parserBuilder()
                     .setSigningKey(generatyKey()).build()
                     .parseClaimsJws(refactorToken(token)).getBody();
-
         }catch (JwtException e){
             log.error(String.format("ERRO: Invalid token %s", e.getMessage()));
         }
@@ -67,7 +62,6 @@ public class JwtUtils {
     }
 
     public static String getUserNameFromTokem(String token){
-
         return getClaimsFromToken(token).getSubject();
     }
 

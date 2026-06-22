@@ -3,7 +3,7 @@ package com.salgaki.service;
 import com.salgaki.model.Usuario;
 import com.salgaki.repository.UsuarioRepository;
 import com.salgaki.service.exception.EntidadeDuplicadaException;
-import com.salgaki.service.exception.EntityNotFoundException;
+import com.salgaki.service.exception.EntidadeNaoEncontradaException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +76,7 @@ class UsuarioServiceTest {
 
     @Test
     void buscarUsuario_QuandoNaoExiste_DeveLancarEntityNotFoundException() {
-        assertThrows(EntityNotFoundException.class, usuarioService::buscarUsuario);
+        assertThrows(EntidadeNaoEncontradaException.class, usuarioService::buscarUsuario);
     }
 
     @Test

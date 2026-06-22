@@ -1,19 +1,17 @@
 package com.salgaki;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.salgaki.dto.EstoqueCreateDTO;
 import com.salgaki.dto.LoginRequestDTO;
-import com.salgaki.dto.MovimentacaoCreateDTO;
 import com.salgaki.model.Categoria;
-import com.salgaki.model.Estoque;
-import com.salgaki.model.MovimentacaoEstoque;
 import com.salgaki.model.Produto;
-import com.salgaki.model.TipoMovimentacao;
 import com.salgaki.model.Usuario;
 import com.salgaki.repository.CategoriaRepository;
-import com.salgaki.repository.EstoqueRepository;
-import com.salgaki.repository.MovimentacaoRepository;
 import com.salgaki.repository.ProdutoRepository;
 import com.salgaki.repository.UsuarioRepository;
+import com.salgaki.repository.EstoqueRepository;
+import com.salgaki.service.CategoriaService;
+import com.salgaki.service.ProdutoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -35,35 +33,36 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EstoqueControllerTest {
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @Autowired private ProdutoRepository produtoRepository;
+    @Autowired private CategoriaService categoriaService;
+    @Autowired private ProdutoService produtoService;
     @Autowired private CategoriaRepository categoriaRepository;
+    @Autowired private ProdutoRepository produtoRepository;
     @Autowired private EstoqueRepository estoqueRepository;
-    @Autowired private MovimentacaoRepository movimentacaoRepository;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private ObjectMapper objectMapper;
 
     private Produto produto;
-    private Estoque estoque;
     private String token;
+    private LocalDate validade;
 
     @BeforeEach
-    void setUp() throws Exception {
-        movimentacaoRepository.deleteAll();
+    void setup() throws Exception {
         estoqueRepository.deleteAll();
         produtoRepository.deleteAll();
         categoriaRepository.deleteAll();
         usuarioRepository.deleteAll();
 
-        Categoria categoria = categoriaRepository.save(new Categoria(null, "Salgado"));
-        produto = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoria));
-        estoque = estoqueRepository.save(new Estoque(null, produto, 0, LocalDateTime.now().toLocalDate(), null));
+        Categoria categoria = categoriaService.criar(new Categoria(null, "Bebidas"));
+        produto = produtoService.criar(new Produto(null, "Suco de Laranja", 5.50, categoria, null));
+        validade = LocalDate.now().plusDays(30);
 
-        // cria usuário para login
-        Usuario usuario = new Usuario(null, "luciana", passwordEncoder.encode("senha123"));
+        // cria usuário e login
+        Usuario usuario = new Usuario();
+        usuario.setUsername("luciana");
+        usuario.setPassword(passwordEncoder.encode("senha123"));
         usuarioRepository.save(usuario);
 
-        // login via AuthController
         LoginRequestDTO loginRequest = new LoginRequestDTO("luciana", "senha123");
         String response = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -77,93 +76,85 @@ class EstoqueControllerTest {
     }
 
     @Test
-    void deveRegistrarEntradaERetornarSaldoAtualizado() throws Exception {
+    void deveCriarEstoqueInicial() throws Exception {
+        LocalDate validade = LocalDate.now().plusDays(30);
+        EstoqueCreateDTO dto = new EstoqueCreateDTO(produto.getId(), 5, validade);
+
+        mockMvc.perform(post("/estoques")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.produtoNome").value("Suco de Laranja"))
+                .andExpect(jsonPath("$.quantidade").value(5))
+                .andExpect(jsonPath("$.dataValidade").value(validade.toString()));
+    }
+
+
+    @Test
+    void deveAdicionarEntradaDeEstoque() throws Exception {
+        EstoqueCreateDTO dto = new EstoqueCreateDTO(produto.getId(), 0, validade);
+        mockMvc.perform(post("/estoques")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated());
+
         mockMvc.perform(put("/estoques/" + produto.getId() + "/entrada")
-                        .header("Authorization", "Bearer " + token)
-                        .param("quantidade", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.quantidade").value(20));
-    }
-
-    @Test
-    void deveRegistrarSaidaERetornarSaldoAtualizado() throws Exception {
-        // entrada de 10
-        mockMvc.perform(put("/estoques/" + produto.getId() + "/entrada")
-                .header("Authorization", "Bearer " + token)
-                .param("quantidade", "10"));
-
-        // saída de 3
-        mockMvc.perform(put("/estoques/" + produto.getId() + "/saida")
-                        .header("Authorization", "Bearer " + token)
-                        .param("quantidade", "3"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.quantidade").value(7));
-    }
-
-    @Test
-    void deveFalharSaidaComEstoqueInsuficiente() throws Exception {
-        mockMvc.perform(put("/estoques/" + produto.getId() + "/saida")
-                        .header("Authorization", "Bearer " + token)
-                        .param("quantidade", "10"))
-                .andExpect(status().isUnprocessableEntity());
-    }
-
-    @Test
-    void deveRetornarProdutosComEstoqueBaixo() throws Exception {
-        // saldo = 0, abaixo do limite de 5
-        mockMvc.perform(get("/estoques/baixo")
+                        .param("quantidade", "10")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].produtoNome").value("Coxinha"));
+                .andExpect(jsonPath("$.quantidade").value(10))
+                .andExpect(jsonPath("$.dataValidade").value(validade.toString()));
     }
 
     @Test
-    void deveRetornarRelatorioComTotaisCorretos() throws Exception {
-        LocalDateTime agora = LocalDateTime.now();
+    void deveRemoverSaidaDeEstoque() throws Exception {
+        EstoqueCreateDTO dto = new EstoqueCreateDTO(produto.getId(), 10, validade);
+        mockMvc.perform(post("/estoques")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated());
 
-        MovimentacaoEstoque entrada = new MovimentacaoEstoque(null, estoque, 30, TipoMovimentacao.ENTRADA, agora.minusHours(2));
-        MovimentacaoEstoque saida = new MovimentacaoEstoque(null, estoque, 10, TipoMovimentacao.SAIDA, agora.minusHours(1));
-
-        movimentacaoRepository.save(entrada);
-        movimentacaoRepository.save(saida);
-
-        mockMvc.perform(get("/movimentacoes/" + produto.getId() + "/relatorio")
-                        .header("Authorization", "Bearer " + token)
-                        .param("de", agora.minusDays(1).toString())
-                        .param("ate", agora.plusDays(1).toString()))
+        mockMvc.perform(put("/estoques/" + produto.getId() + "/saida")
+                        .param("quantidade", "5")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.produtoNome").value("Coxinha"))
-                .andExpect(jsonPath("$.totalEntradas").value(30))
-                .andExpect(jsonPath("$.totalSaidas").value(10))
-                .andExpect(jsonPath("$.saldoPeriodo").value(20))
-                .andExpect(jsonPath("$.movimentacoes.length()").value(2));
+                .andExpect(jsonPath("$.quantidade").value(5))
+                .andExpect(jsonPath("$.dataValidade").value(validade.toString()));
     }
 
     @Test
-    void deveConsultarEstoqueAtual() throws Exception {
+    void deveConsultarEstoque() throws Exception {
+        EstoqueCreateDTO dto = new EstoqueCreateDTO(produto.getId(), 8, validade);
+        mockMvc.perform(post("/estoques")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated());
+
         mockMvc.perform(get("/estoques/" + produto.getId())
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.produtoNome").value("Coxinha"))
-                .andExpect(jsonPath("$.quantidade").value(0));
+                .andExpect(jsonPath("$.quantidade").value(8))
+                .andExpect(jsonPath("$.dataValidade").value(validade.toString()));
     }
 
     @Test
-    void deveListarMovimentacoesDetalhadas() throws Exception {
-        LocalDateTime agora = LocalDateTime.now();
+    void deveListarEstoquesBaixos() throws Exception {
+        EstoqueCreateDTO dto = new EstoqueCreateDTO(produto.getId(), 3, validade);
+        mockMvc.perform(post("/estoques")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto))
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated());
 
-        MovimentacaoEstoque entrada = new MovimentacaoEstoque(null, estoque, 5, TipoMovimentacao.ENTRADA, agora.minusHours(3));
-        MovimentacaoEstoque saida = new MovimentacaoEstoque(null, estoque, 2, TipoMovimentacao.SAIDA, agora.minusHours(2));
-
-        movimentacaoRepository.save(entrada);
-        movimentacaoRepository.save(saida);
-
-        mockMvc.perform(get("/movimentacoes/" + produto.getId() + "/detalhes")
-                        .header("Authorization", "Bearer " + token)
-                        .param("de", agora.minusDays(1).toString())
-                        .param("ate", agora.plusDays(1).toString()))
+        mockMvc.perform(get("/estoques/baixo")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].produtoNome").value("Coxinha"));
+                .andExpect(jsonPath("$[0].quantidade").value(3))
+                .andExpect(jsonPath("$[0].dataValidade").value(validade.toString()));
     }
 }

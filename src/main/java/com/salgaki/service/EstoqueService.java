@@ -8,12 +8,15 @@ import com.salgaki.repository.EstoqueRepository;
 import com.salgaki.repository.MovimentacaoRepository;
 import com.salgaki.repository.ProdutoRepository;
 import com.salgaki.service.exception.EstoqueInsuficienteException;
+import jakarta.validation.constraints.FutureOrPresent;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,12 +29,14 @@ public class EstoqueService {
     private final MovimentacaoRepository movimentacaoRepository;
 
     @Transactional
-    public Estoque criarEstoque(Produto produto) {
+    public Estoque criarEstoque(Produto produto, @NotNull @FutureOrPresent LocalDate dataValidade) {
         Estoque estoque = new Estoque();
         estoque.setProduto(produto);
-        estoque.setQuantidade(0); // inicia sempre com 0
+        estoque.setQuantidade(0);
+        estoque.setDataValidade(dataValidade);
         return estoqueRepository.save(estoque);
     }
+
 
     @Transactional
     public Estoque adicionarEstoque(Long produtoId, Integer quantidade) {
@@ -82,7 +87,6 @@ public class EstoqueService {
                 .orElseThrow(() -> new RuntimeException("Estoque não encontrado para produto " + produtoId));
     }
     public List<Estoque> listarEstoquesBaixos() {
-        // exemplo: limite fixo de 5 unidades
         return estoqueRepository.findByQuantidadeLessThan(5);
     }
 

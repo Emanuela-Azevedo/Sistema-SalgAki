@@ -15,13 +15,15 @@ public class SalgakiApplication {
 		UsuarioRepository usuarioRepository = ctx.getBean(UsuarioRepository.class);
 		PasswordEncoder passwordEncoder = ctx.getBean(PasswordEncoder.class);
 
-		// Cria usuário com senha encriptada
-		Usuario usuario = new Usuario();
-		usuario.setUsername("luciana");
-		usuario.setPassword(passwordEncoder.encode("123456"));
+		if (usuarioRepository.count() == 0) {
+			Usuario usuario = new Usuario();
+			usuario.setUsername("luciana");
+			usuario.setPassword(passwordEncoder.encode("123456"));
+			usuario.setSingletonKey(1);
 
-		usuarioRepository.save(usuario);
+			usuarioRepository.save(usuario);
 
-		System.out.println("Usuário criado com sucesso: " + usuario.getUsername());
+			System.out.println("Usuário criado com sucesso: " + usuario.getUsername());
+		}
 	}
 }

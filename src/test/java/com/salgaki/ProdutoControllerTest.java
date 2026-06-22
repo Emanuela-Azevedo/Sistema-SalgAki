@@ -48,7 +48,9 @@ class ProdutoControllerTest {
         categoriaDoce = categoriaRepository.save(new Categoria(null, "Doce"));
 
         // cria usuário para login
-        Usuario usuario = new Usuario(null, "luciana", passwordEncoder.encode("senha123"));
+        Usuario usuario = new Usuario();
+        usuario.setUsername("luciana");
+        usuario.setPassword(passwordEncoder.encode("senha123"));
         usuarioRepository.save(usuario);
 
         // login via AuthController
@@ -66,7 +68,11 @@ class ProdutoControllerTest {
 
     @Test
     void deveCriarProduto() throws Exception {
-        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha", 5.0, categoriaSalgado.getId());
+        ProdutoCreateDTO dto = new ProdutoCreateDTO(
+                "Coxinha",
+                5.0,
+                categoriaSalgado.getId()
+        );
 
         mockMvc.perform(post("/produtos")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -79,7 +85,7 @@ class ProdutoControllerTest {
 
     @Test
     void deveListarProdutos() throws Exception {
-        produtoRepository.save(new Produto(null, "Pastel", 4.0, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Pastel", 4.0, categoriaSalgado, null));
 
         mockMvc.perform(get("/produtos")
                         .header("Authorization", "Bearer " + token))
@@ -89,9 +95,12 @@ class ProdutoControllerTest {
 
     @Test
     void deveAtualizarProduto() throws Exception {
-        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
-        ProdutoCreateDTO dto = new ProdutoCreateDTO("Coxinha G", 7.0, categoriaSalgado.getId());
-
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado, null));
+        ProdutoCreateDTO dto = new ProdutoCreateDTO(
+                "Coxinha G",
+                7.0,
+                categoriaSalgado.getId()
+        );
         mockMvc.perform(put("/produtos/" + salvo.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto))
@@ -103,7 +112,7 @@ class ProdutoControllerTest {
 
     @Test
     void deveDeletarProduto() throws Exception {
-        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado, null));
 
         mockMvc.perform(delete("/produtos/" + salvo.getId())
                         .header("Authorization", "Bearer " + token))
@@ -112,7 +121,7 @@ class ProdutoControllerTest {
 
     @Test
     void deveRetornarProdutoPorId() throws Exception {
-        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
+        Produto salvo = produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado, null));
 
         mockMvc.perform(get("/produtos/" + salvo.getId())
                         .header("Authorization", "Bearer " + token))
@@ -130,7 +139,7 @@ class ProdutoControllerTest {
 
     @Test
     void deveBuscarPorNome() throws Exception {
-        produtoRepository.save(new Produto(null, "Empada", 6.0, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Empada", 6.0, categoriaSalgado, null));
 
         mockMvc.perform(get("/produtos").param("nome", "emp")
                         .header("Authorization", "Bearer " + token))
@@ -140,7 +149,7 @@ class ProdutoControllerTest {
 
     @Test
     void deveFiltrarPorCategoria() throws Exception {
-        produtoRepository.save(new Produto(null, "Brigadeiro", 3.0, categoriaDoce));
+        produtoRepository.save(new Produto(null, "Brigadeiro", 3.0, categoriaDoce, null));
 
         mockMvc.perform(get("/produtos").param("categoriaId", categoriaDoce.getId().toString())
                         .header("Authorization", "Bearer " + token))
@@ -150,8 +159,8 @@ class ProdutoControllerTest {
 
     @Test
     void deveListarEmOrdemAlfabetica() throws Exception {
-        produtoRepository.save(new Produto(null, "Pastel", 4.0, categoriaSalgado));
-        produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado));
+        produtoRepository.save(new Produto(null, "Pastel", 4.0, categoriaSalgado, null));
+        produtoRepository.save(new Produto(null, "Coxinha", 5.0, categoriaSalgado, null));
 
         mockMvc.perform(get("/produtos").param("alfabetica", "true")
                         .header("Authorization", "Bearer " + token))

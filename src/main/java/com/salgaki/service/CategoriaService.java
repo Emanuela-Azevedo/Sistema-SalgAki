@@ -3,7 +3,7 @@ package com.salgaki.service;
 import com.salgaki.model.Categoria;
 import com.salgaki.repository.CategoriaRepository;
 import com.salgaki.service.exception.EntidadeDuplicadaException;
-import com.salgaki.service.exception.EntityNotFoundException;
+import com.salgaki.service.exception.EntidadeNaoEncontradaException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +21,7 @@ public class CategoriaService {
     @Transactional
     public Categoria criar(Categoria categoria) {
         if (categoriaRepository.findByNomeIgnoreCase(categoria.getNome()).isPresent()) {
-            throw new EntidadeDuplicadaException("Categoria já existe: " + categoria.getNome());
+            throw new EntidadeDuplicadaException("Categoria " + categoria.getNome() + " já cadastrada!");
         }
         return categoriaRepository.save(categoria);
     }
@@ -34,7 +34,7 @@ public class CategoriaService {
     @Transactional(readOnly = true)
     public Categoria buscarPorId(Long id) {
         return categoriaRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Categoria não encontrada: " + id));
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Categoria não existe no sistema."));
     }
 
     @Transactional
@@ -42,7 +42,7 @@ public class CategoriaService {
         Categoria categoria = buscarPorId(id);
         categoriaRepository.findByNomeIgnoreCase(dados.getNome())
                 .filter(c -> !c.getId().equals(id))
-                .ifPresent(c -> { throw new EntidadeDuplicadaException("Categoria já existe: " + dados.getNome()); });
+                .ifPresent(c -> { throw new EntidadeDuplicadaException("Categoria com nome" +dados.getNome()+" já cadastrada."); });
         categoria.setNome(dados.getNome());
         return categoriaRepository.save(categoria);
     }
