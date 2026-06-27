@@ -7,15 +7,13 @@ import com.salgaki.model.TipoMovimentacao;
 import com.salgaki.repository.EstoqueRepository;
 import com.salgaki.repository.MovimentacaoRepository;
 import com.salgaki.repository.ProdutoRepository;
+import com.salgaki.service.exception.EntidadeNaoEncontradaException;
 import com.salgaki.service.exception.EstoqueInsuficienteException;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,21 +37,33 @@ public class EstoqueService {
 
 
     @Transactional
-    public Estoque adicionarEstoque(Long produtoId, Integer quantidade) {
+    public Estoque adicionarEstoque(Long produtoId, Integer quantidade, LocalDate dataValidade) {
+
         Estoque estoque = estoqueRepository.findByProdutoId(produtoId)
-                .orElseThrow(() -> new RuntimeException("Estoque não encontrado para produto " + produtoId));
+                .orElseGet(() -> {
+                    Produto produto = produtoRepository.findById(produtoId)
+                            .orElseThrow(() ->
+                                    new EntidadeNaoEncontradaException("Produto não encontrado"));
+
+                    Estoque novo = new Estoque();
+                    novo.setProduto(produto);
+                    novo.setQuantidade(0);
+                    novo.setDataValidade(dataValidade);
+
+                    return estoqueRepository.save(novo);
+                });
 
         estoque.setQuantidade(estoque.getQuantidade() + quantidade);
 
-        // registrar movimentação
-        MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
-                null,
-                estoque,
-                quantidade,
-                TipoMovimentacao.ENTRADA,
-                LocalDateTime.now()
+        movimentacaoRepository.save(
+                new MovimentacaoEstoque(
+                        null,
+                        estoque,
+                        quantidade,
+                        TipoMovimentacao.ENTRADA,
+                        LocalDateTime.now()
+                )
         );
-        movimentacaoRepository.save(movimentacao);
 
         return estoqueRepository.save(estoque);
     }
@@ -61,8 +71,7 @@ public class EstoqueService {
     @Transactional
     public Estoque removerEstoque(Long produtoId, Integer quantidade) {
         Estoque estoque = estoqueRepository.findByProdutoId(produtoId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Estoque não encontrado para produto " + produtoId));
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Estoque não encontrado para produto " + produtoId));
 
         if (estoque.getQuantidade() < quantidade) {
             throw new EstoqueInsuficienteException("Quantidade insuficiente em estoque");
@@ -84,7 +93,7 @@ public class EstoqueService {
 
     public Estoque consultarEstoque(Long produtoId) {
         return estoqueRepository.findByProdutoId(produtoId)
-                .orElseThrow(() -> new RuntimeException("Estoque não encontrado para produto " + produtoId));
+                .orElseThrow(() -> new EntidadeNaoEncontradaException("Estoque não encontrado para produto " + produtoId));
     }
     public List<Estoque> listarEstoquesBaixos() {
         return estoqueRepository.findByQuantidadeLessThan(5);

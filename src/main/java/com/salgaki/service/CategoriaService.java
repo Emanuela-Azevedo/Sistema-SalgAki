@@ -3,7 +3,9 @@ package com.salgaki.service;
 import com.salgaki.model.Categoria;
 import com.salgaki.repository.CategoriaRepository;
 import com.salgaki.service.exception.EntidadeDuplicadaException;
+import com.salgaki.service.exception.EntidadeEmUsoException;
 import com.salgaki.service.exception.EntidadeNaoEncontradaException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +44,9 @@ public class CategoriaService {
         Categoria categoria = buscarPorId(id);
         categoriaRepository.findByNomeIgnoreCase(dados.getNome())
                 .filter(c -> !c.getId().equals(id))
-                .ifPresent(c -> { throw new EntidadeDuplicadaException("Categoria com nome" +dados.getNome()+" já cadastrada."); });
+                .ifPresent(c -> {
+                    throw new EntidadeDuplicadaException("Categoria com nome" + dados.getNome() + " já cadastrada.");
+                });
         categoria.setNome(dados.getNome());
         return categoriaRepository.save(categoria);
     }
@@ -50,6 +54,14 @@ public class CategoriaService {
     @Transactional
     public void deletar(Long id) {
         buscarPorId(id);
-        categoriaRepository.deleteById(id);
+
+        try {
+            categoriaRepository.deleteById(id);
+            categoriaRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new EntidadeEmUsoException(
+                    "Não é possível excluir a categoria, pois ela está sendo utilizada por um ou mais produtos."
+            );
+        }
     }
 }

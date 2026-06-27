@@ -74,8 +74,11 @@ class CardapioControllerTest {
 
         produtoComEstoque = produtoService.criar(new Produto(null, "Suco de Laranja", 5.50, categoria, null));
         estoqueService.criarEstoque(produtoComEstoque, validade);
-        estoqueService.adicionarEstoque(produtoComEstoque.getId(), 10);
-
+        estoqueService.adicionarEstoque(
+                produtoComEstoque.getId(),
+                10,
+                LocalDate.of(2026, 10, 25)
+        );
         produtoSemEstoque = produtoService.criar(new Produto(null, "Refrigerante Cola", 6.00, categoria, null));
         estoqueService.criarEstoque(produtoSemEstoque, validade);
         // não adiciona quantidade → estoque fica 0

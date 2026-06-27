@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class EstoqueController {
         Produto produto = produtoService.buscarPorId(dto.getProdutoId());
         Estoque estoque = estoqueService.criarEstoque(produto, dto.getDataValidade());
         if (dto.getQuantidade() > 0) {
-            estoqueService.adicionarEstoque(produto.getId(), dto.getQuantidade());
+            estoqueService.adicionarEstoque(produto.getId(), dto.getQuantidade(),dto.getDataValidade());
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(EstoqueMapper.toDto(estoque));
     }
@@ -43,8 +44,8 @@ public class EstoqueController {
 
     @PutMapping("/{produtoId}/entrada")
     public ResponseEntity<EstoqueResponseDTO> entrada(@PathVariable Long produtoId,
-                                                      @RequestParam Integer quantidade) {
-        Estoque estoque = estoqueService.adicionarEstoque(produtoId, quantidade);
+                                                      @RequestParam Integer quantidade, @RequestParam LocalDate dataValidade) {
+        Estoque estoque = estoqueService.adicionarEstoque(produtoId, quantidade,dataValidade);
         return ResponseEntity.ok(EstoqueMapper.toDto(estoque));
     }
 
