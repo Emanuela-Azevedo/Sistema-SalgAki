@@ -26,14 +26,11 @@ public class EstoqueController {
 
     @PostMapping
     public ResponseEntity<EstoqueResponseDTO> criar(@RequestBody @Valid EstoqueCreateDTO dto) {
-        Produto produto = produtoService.buscarPorId(dto.getProdutoId());
-        Estoque estoque = estoqueService.criarEstoque(produto, dto.getDataValidade());
-        if (dto.getQuantidade() > 0) {
-            estoqueService.adicionarEstoque(produto.getId(), dto.getQuantidade(),dto.getDataValidade());
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(EstoqueMapper.toDto(estoque));
+        Estoque estoque = estoqueService.criarEstoque(dto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(EstoqueMapper.toDto(estoque));
     }
-
 
 
     @GetMapping("/{produtoId}")
@@ -57,12 +54,10 @@ public class EstoqueController {
     }
     @GetMapping("/baixo")
     public ResponseEntity<List<EstoqueResponseDTO>> listarEstoquesBaixos() {
-        List<Estoque> estoquesBaixos = estoqueService.listarEstoquesBaixos();
-        List<EstoqueResponseDTO> dtos = estoquesBaixos.stream()
-                .map(EstoqueMapper::toDto)
-                .toList();
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(
+                EstoqueMapper.toDtoList(
+                        estoqueService.listarEstoquesBaixos()
+                )
+        );
     }
-
-
 }

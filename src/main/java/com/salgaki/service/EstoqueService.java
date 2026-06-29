@@ -1,5 +1,6 @@
 package com.salgaki.service;
 
+import com.salgaki.dto.EstoqueCreateDTO;
 import com.salgaki.model.Estoque;
 import com.salgaki.model.MovimentacaoEstoque;
 import com.salgaki.model.Produto;
@@ -27,12 +28,30 @@ public class EstoqueService {
     private final MovimentacaoRepository movimentacaoRepository;
 
     @Transactional
-    public Estoque criarEstoque(Produto produto, @NotNull @FutureOrPresent LocalDate dataValidade) {
+    public Estoque criarEstoque(EstoqueCreateDTO dto) {
+
+        Produto produto = produtoRepository.findById(dto.getProdutoId())
+                .orElseThrow(() ->
+                        new EntidadeNaoEncontradaException("Produto não encontrado."));
+
         Estoque estoque = new Estoque();
         estoque.setProduto(produto);
         estoque.setQuantidade(0);
-        estoque.setDataValidade(dataValidade);
-        return estoqueRepository.save(estoque);
+        estoque.setDataValidade(dto.getDataValidade());
+
+        estoque = estoqueRepository.save(estoque);
+
+        if (dto.getQuantidade() > 0) {
+            adicionarEstoque(
+                    produto.getId(),
+                    dto.getQuantidade(),
+                    dto.getDataValidade()
+            );
+
+            estoque = consultarEstoque(produto.getId());
+        }
+
+        return estoque;
     }
 
 

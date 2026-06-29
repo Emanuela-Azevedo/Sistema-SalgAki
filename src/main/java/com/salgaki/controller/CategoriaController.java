@@ -28,7 +28,9 @@ public class CategoriaController {
 
     @GetMapping
     public ResponseEntity<List<CategoriaResponseDTO>> listar() {
-        return ResponseEntity.ok(categoriaService.listarTodas().stream().map(CategoriaMapper::toDto).toList());
+        return ResponseEntity.ok(
+                CategoriaMapper.toDtoList(categoriaService.listarTodas())
+        );
     }
 
     @GetMapping("/{id}")

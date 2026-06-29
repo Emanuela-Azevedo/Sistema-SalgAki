@@ -36,7 +36,6 @@ public class AuthController {
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
             JwtToken token = userDetailsService.getTokenAuthenticated(dto.getUsername());
 
             LoginResponseDTO response = new LoginResponseDTO(
@@ -45,20 +44,20 @@ public class AuthController {
             );
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.AUTHORIZATION, JwtUtils.JWT_BEARER + " " + token.getToken())
-                    .body(response);
+                    .header(HttpHeaders.AUTHORIZATION,
+                            JwtUtils.JWT_BEARER
+                                    + " " + token.getToken()).body(response);
 
         } catch (AuthenticationException e) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body("Credenciais inválidas");
+                    .body("Transação não autorizada");
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpServletRequest request) {
         SecurityContextHolder.clearContext();
-        log.info("Logout realizado com sucesso");
         return ResponseEntity.ok("Logout realizado com sucesso!");
     }
 }

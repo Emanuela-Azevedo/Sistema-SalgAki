@@ -14,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.config.ResourceHandlerRegistry;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @EnableMethodSecurity(prePostEnabled = true)
@@ -29,9 +28,7 @@ public class SpringSecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/cardapio/pdf").permitAll()   // libera o endpoint que retorna a URL
-                        .requestMatchers("/cardapio/pdf/download").permitAll() // libera o download do PDF
-                        .requestMatchers("/files/**").permitAll()       // libera arquivos estáticos
+                        .requestMatchers("/cardapio/**").authenticated()
                         .requestMatchers("/categorias/**").authenticated()
                         .requestMatchers("/produtos/**").authenticated()
                         .requestMatchers("/usuario/**").authenticated()

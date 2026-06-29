@@ -28,6 +28,10 @@ public class Estoque {
     @Column(name = "data_validade", nullable = false)
     private LocalDate dataValidade;
 
-    @OneToMany(mappedBy = "estoque")
+    @OneToMany(
+            mappedBy = "estoque",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     private List<MovimentacaoEstoque> movimentacoes;
 }
