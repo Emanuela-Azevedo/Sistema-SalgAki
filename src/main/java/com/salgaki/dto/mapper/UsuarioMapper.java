@@ -19,9 +19,4 @@ public class UsuarioMapper {
         dto.setUsername(usuario.getUsername());
         return dto;
     }
-
-    public static void updateEntityFromDTO(UsuarioCreateDTO dto, Usuario usuario) {
-        usuario.setUsername(dto.getUsername());
-        usuario.setPassword(dto.getPassword());
-    }
 }

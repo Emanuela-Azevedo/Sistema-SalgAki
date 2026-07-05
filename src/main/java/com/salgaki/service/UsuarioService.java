@@ -57,13 +57,18 @@ public class UsuarioService {
     }
 
     @Transactional
-    public Usuario atualizarSenha(String novaSenha) {
+    public Usuario atualizarSenha(String senhaAtual, String novaSenha) {
         if (novaSenha == null || novaSenha.isBlank()) {
-            throw new IllegalArgumentException("Senha não pode ser vazia");
+            throw new IllegalArgumentException("Nova senha não pode ser vazia");
         }
-        Usuario usuario = buscarUsuario();
-        usuario.setPassword(passwordEncoder.encode(novaSenha));
 
+        Usuario usuario = buscarUsuario();
+
+        if (!passwordEncoder.matches(senhaAtual, usuario.getPassword())) {
+            throw new IllegalArgumentException("Senha atual incorreta");
+        }
+
+        usuario.setPassword(passwordEncoder.encode(novaSenha));
         Usuario usuarioAtualizado = usuarioRepository.save(usuario);
         this.usuarioSingleton = usuarioAtualizado;
 
@@ -71,13 +76,18 @@ public class UsuarioService {
     }
 
     @Transactional
-    public Usuario atualizarUsername(String novoUsername) {
+    public Usuario atualizarUsername(String senhaAtual, String novoUsername) {
         if (novoUsername == null || novoUsername.isBlank()) {
             throw new IllegalArgumentException("Username não pode ser vazio");
         }
-        Usuario usuario = buscarUsuario();
-        usuario.setUsername(novoUsername);
 
+        Usuario usuario = buscarUsuario();
+
+        if (!passwordEncoder.matches(senhaAtual, usuario.getPassword())) {
+            throw new IllegalArgumentException("Senha atual incorreta");
+        }
+
+        usuario.setUsername(novoUsername);
         Usuario usuarioAtualizado = usuarioRepository.save(usuario);
         this.usuarioSingleton = usuarioAtualizado;
 

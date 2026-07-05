@@ -4,14 +4,17 @@ import com.salgaki.dto.MovimentacaoResponseDTO;
 import com.salgaki.model.MovimentacaoEstoque;
 
 public class MovimentacaoMapper {
-    public static MovimentacaoResponseDTO toDto(MovimentacaoEstoque movimentacao) {
+
+    public static MovimentacaoResponseDTO toResponseDTO(MovimentacaoEstoque m) {
         return new MovimentacaoResponseDTO(
-                movimentacao.getId(),
-                movimentacao.getEstoque().getId(),
-                movimentacao.getEstoque().getProduto().getNome(),
-                movimentacao.getTipo(),
-                movimentacao.getQuantidade(),
-                movimentacao.getDataMovimentacao()
+                m.getId(),
+                m.getEstoque().getProduto().getId(),
+                m.getEstoque().getProduto().getNome(),
+                m.getEstoque().getId(),
+                m.getEstoque().getDataValidade(),
+                m.getTipo(),
+                m.getQuantidade(),
+                m.getDataMovimentacao()
         );
     }
 }

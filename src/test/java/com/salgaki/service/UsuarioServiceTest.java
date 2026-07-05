@@ -73,11 +73,11 @@ class UsuarioServiceTest {
     }
 
     @Test
-    void atualizarSenha_QuandoUsuarioExiste_DeveAtualizarSenha() {
+    void atualizarSenha_QuandoSenhaAtualCorreta_DeveAtualizarSenha() {
         UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
         Usuario salvo = usuarioService.criarUsuario(dto);
 
-        Usuario atualizado = usuarioService.atualizarSenha("novaSenha123");
+        Usuario atualizado = usuarioService.atualizarSenha("senha123", "novaSenha123");
 
         assertEquals(salvo.getId(), atualizado.getId());
         assertTrue(passwordEncoder.matches("novaSenha123", atualizado.getPassword()));
@@ -85,30 +85,50 @@ class UsuarioServiceTest {
     }
 
     @Test
-    void atualizarSenha_QuandoSenhaVazia_DeveLancarIllegalArgumentException() {
+    void atualizarSenha_QuandoSenhaAtualIncorreta_DeveLancarIllegalArgumentException() {
         UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
         usuarioService.criarUsuario(dto);
 
-        assertThrows(IllegalArgumentException.class, () -> usuarioService.atualizarSenha(""));
+        assertThrows(IllegalArgumentException.class,
+                () -> usuarioService.atualizarSenha("senhaErrada", "novaSenha123"));
     }
 
     @Test
-    void atualizarUsername_QuandoUsuarioExiste_DeveAtualizarUsername() {
+    void atualizarSenha_QuandoNovaSenhaVazia_DeveLancarIllegalArgumentException() {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        usuarioService.criarUsuario(dto);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> usuarioService.atualizarSenha("senha123", ""));
+    }
+
+    @Test
+    void atualizarUsername_QuandoSenhaAtualCorreta_DeveAtualizarUsername() {
         UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
         Usuario salvo = usuarioService.criarUsuario(dto);
 
-        Usuario atualizado = usuarioService.atualizarUsername("novoUsuario");
+        Usuario atualizado = usuarioService.atualizarUsername("senha123", "novoUsuario");
 
         assertEquals(salvo.getId(), atualizado.getId());
         assertEquals("novoUsuario", atualizado.getUsername());
     }
 
     @Test
-    void atualizarUsername_QuandoUsernameVazio_DeveLancarIllegalArgumentException() {
+    void atualizarUsername_QuandoSenhaAtualIncorreta_DeveLancarIllegalArgumentException() {
         UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
         usuarioService.criarUsuario(dto);
 
-        assertThrows(IllegalArgumentException.class, () -> usuarioService.atualizarUsername(""));
+        assertThrows(IllegalArgumentException.class,
+                () -> usuarioService.atualizarUsername("senhaErrada", "novoUsuario"));
+    }
+
+    @Test
+    void atualizarUsername_QuandoNovoUsernameVazio_DeveLancarIllegalArgumentException() {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        usuarioService.criarUsuario(dto);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> usuarioService.atualizarUsername("senha123", ""));
     }
 
     @Test

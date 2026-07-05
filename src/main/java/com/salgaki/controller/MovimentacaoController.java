@@ -2,6 +2,7 @@ package com.salgaki.controller;
 
 import com.salgaki.dto.MovimentacaoResponseDTO;
 import com.salgaki.dto.RelatorioMovimentacaoDTO;
+import com.salgaki.dto.mapper.MovimentacaoMapper;
 import com.salgaki.service.MovimentacaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -25,6 +26,14 @@ public class MovimentacaoController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime ate) {
 
         RelatorioMovimentacaoDTO relatorio = movimentacaoService.gerarRelatorio(produtoId, de, ate);
+
+        List<MovimentacaoResponseDTO> movimentacoesDTO = movimentacaoService.buscarMovimentacoes(produtoId, de, ate)
+                .stream()
+                .map(MovimentacaoMapper::toResponseDTO)
+                .toList();
+
+        relatorio.setMovimentacoes(movimentacoesDTO);
+
         return ResponseEntity.ok(relatorio);
     }
 
@@ -34,12 +43,13 @@ public class MovimentacaoController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime de,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime ate) {
 
-        List<MovimentacaoResponseDTO> movimentacoes = movimentacaoService.listarMovimentacoes(produtoId, de, ate);
+        List<MovimentacaoResponseDTO> movimentacoes = movimentacaoService.buscarMovimentacoes(produtoId, de, ate)
+                .stream()
+                .map(MovimentacaoMapper::toResponseDTO)
+                .toList();
 
-        if (movimentacoes.isEmpty()) {
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.ok(movimentacoes);
+        return movimentacoes.isEmpty()
+                ? ResponseEntity.noContent().build()
+                : ResponseEntity.ok(movimentacoes);
     }
 }
