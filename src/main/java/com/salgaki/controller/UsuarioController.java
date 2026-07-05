@@ -21,11 +21,10 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<UsuarioResponseDTO> criarUsuario(@RequestBody @Valid UsuarioCreateDTO dto) {
-        Usuario salvo = usuarioService.criarUsuario(UsuarioMapper.toEntity(dto));
+        Usuario salvo = usuarioService.criarUsuario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioMapper.toResponseDTO(salvo));
     }
 
-    
     @GetMapping
     public ResponseEntity<UsuarioResponseDTO> obterUsuario() {
         Usuario usuario = usuarioService.buscarUsuario();
@@ -34,9 +33,6 @@ public class UsuarioController {
 
     @PutMapping("/senha")
     public ResponseEntity<UsuarioResponseDTO> atualizarSenha(@RequestParam String novaSenha) {
-        if (novaSenha == null || novaSenha.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
         Usuario atualizado = usuarioService.atualizarSenha(novaSenha);
         return ResponseEntity.ok(UsuarioMapper.toResponseDTO(atualizado));
     }

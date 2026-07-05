@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,10 +24,6 @@ public class MovimentacaoController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime de,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime ate) {
 
-        if (de.isAfter(ate)) {
-            return ResponseEntity.badRequest().build();
-        }
-
         RelatorioMovimentacaoDTO relatorio = movimentacaoService.gerarRelatorio(produtoId, de, ate);
         return ResponseEntity.ok(relatorio);
     }
@@ -36,10 +33,6 @@ public class MovimentacaoController {
             @PathVariable Long produtoId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime de,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime ate) {
-
-        if (de.isAfter(ate)) {
-            return ResponseEntity.badRequest().build();
-        }
 
         List<MovimentacaoResponseDTO> movimentacoes = movimentacaoService.listarMovimentacoes(produtoId, de, ate);
 

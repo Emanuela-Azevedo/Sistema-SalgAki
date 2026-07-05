@@ -1,5 +1,7 @@
 package com.salgaki.service;
 
+import com.salgaki.dto.UsuarioCreateDTO;
+import com.salgaki.dto.mapper.UsuarioMapper;
 import com.salgaki.model.Usuario;
 import com.salgaki.repository.UsuarioRepository;
 import com.salgaki.service.exception.EntidadeDuplicadaException;
@@ -23,12 +25,13 @@ public class UsuarioService {
     }
 
     @Transactional
-    public synchronized Usuario criarUsuario(Usuario usuario) {
+    public synchronized Usuario criarUsuario(UsuarioCreateDTO dto) {
         if (usuarioRepository.count() > 0) {
             throw new EntidadeDuplicadaException("Já existe um usuário cadastrado no sistema. Apenas um usuário é permitido.");
         }
 
         try {
+            Usuario usuario = UsuarioMapper.toEntity(dto);
             usuario.setId(null);
             usuario.setSingletonKey(1);
             usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
@@ -53,13 +56,11 @@ public class UsuarioService {
         return usuarioSingleton;
     }
 
-    @Transactional(readOnly = true)
-    public Usuario obterInstanciaUnica() {
-        return buscarUsuario();
-    }
-
     @Transactional
     public Usuario atualizarSenha(String novaSenha) {
+        if (novaSenha == null || novaSenha.isBlank()) {
+            throw new IllegalArgumentException("Senha não pode ser vazia");
+        }
         Usuario usuario = buscarUsuario();
         usuario.setPassword(passwordEncoder.encode(novaSenha));
 
@@ -71,6 +72,9 @@ public class UsuarioService {
 
     @Transactional
     public Usuario atualizarUsername(String novoUsername) {
+        if (novoUsername == null || novoUsername.isBlank()) {
+            throw new IllegalArgumentException("Username não pode ser vazio");
+        }
         Usuario usuario = buscarUsuario();
         usuario.setUsername(novoUsername);
 

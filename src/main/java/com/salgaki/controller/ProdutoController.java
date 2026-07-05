@@ -3,11 +3,8 @@ package com.salgaki.controller;
 import com.salgaki.dto.ProdutoCreateDTO;
 import com.salgaki.dto.ProdutoResponseDTO;
 import com.salgaki.dto.mapper.ProdutoMapper;
-import com.salgaki.model.Categoria;
 import com.salgaki.model.Produto;
-import com.salgaki.service.CategoriaService;
 import com.salgaki.service.ProdutoService;
-import com.salgaki.service.EstoqueService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,18 +19,13 @@ import java.util.List;
 public class ProdutoController {
 
     private final ProdutoService produtoService;
-    private final CategoriaService categoriaService;
-    private final EstoqueService estoqueService;
 
     @PostMapping
     public ResponseEntity<ProdutoResponseDTO> criar(@RequestBody @Valid ProdutoCreateDTO dto) {
-        Categoria categoria = categoriaService.buscarPorId(dto.getCategoriaId());
-        Produto produto = produtoService.criar(ProdutoMapper.toProduto(dto, categoria));
-
+        Produto produto = produtoService.criar(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ProdutoMapper.toDto(produto));
     }
-
 
     @GetMapping
     public ResponseEntity<List<ProdutoResponseDTO>> listar(
@@ -41,26 +33,7 @@ public class ProdutoController {
             @RequestParam(required = false) Long categoriaId,
             @RequestParam(required = false, defaultValue = "false") boolean alfabetica
     ) {
-        List<Produto> produtos = produtoService.listarTodos();
-
-        if (nome != null && !nome.isBlank()) {
-            produtos = produtos.stream()
-                    .filter(p -> p.getNome().toLowerCase().contains(nome.toLowerCase()))
-                    .toList();
-        }
-
-        if (categoriaId != null) {
-            produtos = produtos.stream()
-                    .filter(p -> p.getCategoria().getId().equals(categoriaId))
-                    .toList();
-        }
-
-        if (alfabetica) {
-            produtos = produtos.stream()
-                    .sorted((p1, p2) -> p1.getNome().compareToIgnoreCase(p2.getNome()))
-                    .toList();
-        }
-
+        List<Produto> produtos = produtoService.listar(nome, categoriaId, alfabetica);
         return ResponseEntity.ok(produtos.stream()
                 .map(ProdutoMapper::toDto)
                 .toList());
@@ -74,8 +47,7 @@ public class ProdutoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProdutoResponseDTO> atualizar(@PathVariable Long id, @RequestBody @Valid ProdutoCreateDTO dto) {
-        Categoria categoria = categoriaService.buscarPorId(dto.getCategoriaId());
-        Produto atualizado = produtoService.atualizar(id, ProdutoMapper.toProduto(dto, categoria));
+        Produto atualizado = produtoService.atualizar(id, dto);
         return ResponseEntity.ok(ProdutoMapper.toDto(atualizado));
     }
 

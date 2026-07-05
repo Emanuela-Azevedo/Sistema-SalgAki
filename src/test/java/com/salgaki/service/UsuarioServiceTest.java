@@ -1,5 +1,6 @@
 package com.salgaki.service;
 
+import com.salgaki.dto.UsuarioCreateDTO;
 import com.salgaki.model.Usuario;
 import com.salgaki.repository.UsuarioRepository;
 import com.salgaki.service.exception.EntidadeDuplicadaException;
@@ -34,11 +35,9 @@ class UsuarioServiceTest {
 
     @Test
     void criarUsuario_QuandoNaoExiste_DeveSalvarUsuario() {
-        Usuario usuario = new Usuario();
-        usuario.setUsername("usuarioTeste");
-        usuario.setPassword("senha123");
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
 
-        Usuario salvo = usuarioService.criarUsuario(usuario);
+        Usuario salvo = usuarioService.criarUsuario(dto);
 
         assertNotNull(salvo.getId());
         assertEquals("usuarioTeste", salvo.getUsername());
@@ -48,25 +47,19 @@ class UsuarioServiceTest {
 
     @Test
     void criarUsuario_QuandoJaExiste_DeveLancarEntidadeDuplicadaException() {
-        Usuario primeiroUsuario = new Usuario();
-        primeiroUsuario.setUsername("usuarioTeste");
-        primeiroUsuario.setPassword("senha123");
-        usuarioService.criarUsuario(primeiroUsuario);
+        UsuarioCreateDTO primeiro = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        usuarioService.criarUsuario(primeiro);
 
-        Usuario segundoUsuario = new Usuario();
-        segundoUsuario.setUsername("outroUsuario");
-        segundoUsuario.setPassword("senha456");
+        UsuarioCreateDTO segundo = new UsuarioCreateDTO("outroUsuario", "senha456");
 
-        assertThrows(EntidadeDuplicadaException.class, () -> usuarioService.criarUsuario(segundoUsuario));
+        assertThrows(EntidadeDuplicadaException.class, () -> usuarioService.criarUsuario(segundo));
         assertEquals(1, usuarioRepository.count());
     }
 
     @Test
     void buscarUsuario_QuandoExiste_DeveRetornarUsuario() {
-        Usuario usuario = new Usuario();
-        usuario.setUsername("usuarioTeste");
-        usuario.setPassword("senha123");
-        Usuario salvo = usuarioService.criarUsuario(usuario);
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        Usuario salvo = usuarioService.criarUsuario(dto);
 
         Usuario encontrado = usuarioService.buscarUsuario();
 
@@ -81,10 +74,8 @@ class UsuarioServiceTest {
 
     @Test
     void atualizarSenha_QuandoUsuarioExiste_DeveAtualizarSenha() {
-        Usuario usuario = new Usuario();
-        usuario.setUsername("usuarioTeste");
-        usuario.setPassword("senha123");
-        Usuario salvo = usuarioService.criarUsuario(usuario);
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        Usuario salvo = usuarioService.criarUsuario(dto);
 
         Usuario atualizado = usuarioService.atualizarSenha("novaSenha123");
 
@@ -94,11 +85,36 @@ class UsuarioServiceTest {
     }
 
     @Test
+    void atualizarSenha_QuandoSenhaVazia_DeveLancarIllegalArgumentException() {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        usuarioService.criarUsuario(dto);
+
+        assertThrows(IllegalArgumentException.class, () -> usuarioService.atualizarSenha(""));
+    }
+
+    @Test
+    void atualizarUsername_QuandoUsuarioExiste_DeveAtualizarUsername() {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        Usuario salvo = usuarioService.criarUsuario(dto);
+
+        Usuario atualizado = usuarioService.atualizarUsername("novoUsuario");
+
+        assertEquals(salvo.getId(), atualizado.getId());
+        assertEquals("novoUsuario", atualizado.getUsername());
+    }
+
+    @Test
+    void atualizarUsername_QuandoUsernameVazio_DeveLancarIllegalArgumentException() {
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        usuarioService.criarUsuario(dto);
+
+        assertThrows(IllegalArgumentException.class, () -> usuarioService.atualizarUsername(""));
+    }
+
+    @Test
     void existeUsuario_QuandoUsuarioCadastrado_DeveRetornarTrue() {
-        Usuario usuario = new Usuario();
-        usuario.setUsername("usuarioTeste");
-        usuario.setPassword("senha123");
-        usuarioService.criarUsuario(usuario);
+        UsuarioCreateDTO dto = new UsuarioCreateDTO("usuarioTeste", "senha123");
+        usuarioService.criarUsuario(dto);
 
         assertTrue(usuarioService.existeUsuario());
     }

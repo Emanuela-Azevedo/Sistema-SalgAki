@@ -19,6 +19,8 @@ public class MovimentacaoService {
     private final MovimentacaoRepository movimentacaoEstoqueRepository;
 
     public RelatorioMovimentacaoDTO gerarRelatorio(Long produtoId, LocalDateTime de, LocalDateTime ate) {
+        validarPeriodo(de, ate);
+
         List<MovimentacaoEstoque> movimentacoes = movimentacaoEstoqueRepository
                 .findByEstoqueProdutoIdAndDataMovimentacaoBetween(produtoId, de, ate);
 
@@ -34,14 +36,13 @@ public class MovimentacaoService {
 
         int saldo = entradas - saidas;
 
-        // pega o nome do produto a partir de qualquer movimentação
         String produtoNome = movimentacoes.isEmpty()
                 ? null
                 : movimentacoes.get(0).getEstoque().getProduto().getNome();
 
         return new RelatorioMovimentacaoDTO(
                 produtoId,
-                produtoNome, // <-- preenchido aqui
+                produtoNome,
                 entradas,
                 saidas,
                 saldo,
@@ -50,11 +51,19 @@ public class MovimentacaoService {
     }
 
     public List<MovimentacaoResponseDTO> listarMovimentacoes(Long produtoId, LocalDateTime de, LocalDateTime ate) {
+        validarPeriodo(de, ate);
+
         return movimentacaoEstoqueRepository
                 .findByEstoqueProdutoIdAndDataMovimentacaoBetween(produtoId, de, ate)
                 .stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+
+    private void validarPeriodo(LocalDateTime de, LocalDateTime ate) {
+        if (de.isAfter(ate)) {
+            throw new IllegalArgumentException("Data inicial não pode ser maior que a final");
+        }
     }
 
     private MovimentacaoResponseDTO toResponseDTO(MovimentacaoEstoque m) {

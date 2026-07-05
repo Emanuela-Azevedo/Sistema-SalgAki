@@ -3,6 +3,7 @@ package com.salgaki;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salgaki.dto.EstoqueCreateDTO;
 import com.salgaki.dto.LoginRequestDTO;
+import com.salgaki.dto.ProdutoCreateDTO;
 import com.salgaki.model.Categoria;
 import com.salgaki.model.Produto;
 import com.salgaki.model.Usuario;
@@ -79,17 +80,16 @@ class CardapioControllerTest {
         categoriaRepository.deleteAll();
         usuarioRepository.deleteAll();
 
-        Categoria categoria =
-                categoriaService.criar(new Categoria(null, "Bebidas"));
+        Categoria categoria = categoriaService.criar(new Categoria(null, "Bebidas"));
 
         validade = LocalDate.now().plusDays(30);
 
         produtoComEstoque = produtoService.criar(
-                new Produto(null,
+                new ProdutoCreateDTO(
                         "Suco de Laranja",
                         5.50,
-                        categoria,
-                        null)
+                        categoria.getId()
+                )
         );
 
         estoqueService.criarEstoque(
@@ -101,11 +101,11 @@ class CardapioControllerTest {
         );
 
         produtoSemEstoque = produtoService.criar(
-                new Produto(null,
+                new ProdutoCreateDTO(
                         "Refrigerante Cola",
                         6.00,
-                        categoria,
-                        null)
+                        categoria.getId()
+                )
         );
 
         estoqueService.criarEstoque(
@@ -121,8 +121,7 @@ class CardapioControllerTest {
         usuario.setPassword(passwordEncoder.encode("senha123"));
         usuarioRepository.save(usuario);
 
-        LoginRequestDTO loginRequest =
-                new LoginRequestDTO("luciana", "senha123");
+        LoginRequestDTO loginRequest = new LoginRequestDTO("luciana", "senha123");
 
         String response = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

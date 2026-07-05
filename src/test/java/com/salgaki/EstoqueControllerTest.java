@@ -3,6 +3,7 @@ package com.salgaki;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.salgaki.dto.EstoqueCreateDTO;
 import com.salgaki.dto.LoginRequestDTO;
+import com.salgaki.dto.ProdutoCreateDTO;
 import com.salgaki.model.Categoria;
 import com.salgaki.model.Produto;
 import com.salgaki.model.Usuario;
@@ -54,7 +55,12 @@ class EstoqueControllerTest {
         usuarioRepository.deleteAll();
 
         Categoria categoria = categoriaService.criar(new Categoria(null, "Bebidas"));
-        produto = produtoService.criar(new Produto(null, "Suco de Laranja", 5.50, categoria, null));
+
+        // agora usamos ProdutoCreateDTO
+        produto = produtoService.criar(
+                new ProdutoCreateDTO("Suco de Laranja", 5.50, categoria.getId())
+        );
+
         validade = LocalDate.now().plusDays(30);
 
         // cria usuário e login
@@ -90,7 +96,6 @@ class EstoqueControllerTest {
                 .andExpect(jsonPath("$.quantidade").value(5))
                 .andExpect(jsonPath("$.dataValidade").value(validade.toString()));
     }
-
 
     @Test
     void deveAdicionarEntradaDeEstoque() throws Exception {
