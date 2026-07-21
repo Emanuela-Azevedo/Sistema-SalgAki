@@ -73,21 +73,31 @@ public class ProdutoService {
 
     @Transactional
     public void deletar(Long id) {
+
         Produto produto = buscarPorId(id);
 
-        Estoque estoque = estoqueRepository.findByProdutoId(id).orElse(null);
+        List<Estoque> estoques = estoqueRepository.findByProdutoId(id);
 
-        if (estoque != null && estoque.getQuantidade() != null && estoque.getQuantidade() > 0) {
-            throw new EntidadeEmUsoException("Produto não pode ser excluído, pois ainda existem itens em estoque.");
+        int quantidadeTotal = estoques.stream()
+                .mapToInt(Estoque::getQuantidade)
+                .sum();
+
+        if (quantidadeTotal > 0) {
+            throw new EntidadeEmUsoException(
+                    "Produto não pode ser excluído, pois ainda existem itens em estoque."
+            );
         }
 
-        if (estoque != null && estoque.getMovimentacoes() != null && !estoque.getMovimentacoes().isEmpty()) {
-            throw new EntidadeEmUsoException("Produto não pode ser excluído, pois possui movimentações de estoque.");
+        boolean possuiMovimentacoes = estoques.stream()
+                .anyMatch(e -> e.getMovimentacoes() != null && !e.getMovimentacoes().isEmpty());
+
+        if (possuiMovimentacoes) {
+            throw new EntidadeEmUsoException(
+                    "Produto não pode ser excluído, pois possui movimentações no estoque."
+            );
         }
 
-        if (estoque != null) {
-            estoqueRepository.delete(estoque);
-        }
+        estoqueRepository.deleteAll(estoques);
 
         produtoRepository.delete(produto);
     }

@@ -51,7 +51,7 @@ public class AuthController {
         } catch (AuthenticationException e) {
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body("Transação não autorizada");
+                    .body("Senha e ou usuario incorretos");
         }
     }
 

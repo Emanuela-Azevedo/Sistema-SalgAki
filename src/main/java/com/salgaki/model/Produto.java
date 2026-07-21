@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "produtos")
 @Data
@@ -30,7 +32,6 @@ public class Produto {
     @JoinColumn(name = "categoria_id", nullable = false)
     private Categoria categoria;
 
-    // Relacionamento inverso com Estoque
-    @OneToOne(mappedBy = "produto", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Estoque estoque;
+    @OneToMany(mappedBy = "produto")
+    private List<Estoque> estoques;
 }

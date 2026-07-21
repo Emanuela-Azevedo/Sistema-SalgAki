@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface EstoqueRepository extends JpaRepository<Estoque, Long> {
-    Optional<Estoque> findByProdutoId(Long produtoId);
+    List<Estoque> findByProdutoId(Long produtoId);
 
-    List<Estoque> findByQuantidadeLessThan(Integer limite);
+    List<Estoque> findByProdutoIdOrderByDataValidadeAsc(Long produtoId);
 
     List<Estoque> findByQuantidadeGreaterThan(int quantidade);
+
+    List<Estoque> findAll();
 }

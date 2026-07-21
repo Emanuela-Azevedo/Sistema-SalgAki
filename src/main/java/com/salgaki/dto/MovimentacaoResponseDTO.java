@@ -12,12 +12,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MovimentacaoResponseDTO {
-    private Long id;                // id da movimentação
-    private Long produtoId;
+    private Long id;
+    private Long estoqueId;
     private String produtoNome;
-    private Long estoqueId;         // novo campo
-    private LocalDate dataValidade; // novo campo
+    private LocalDate dataValidade;
     private TipoMovimentacao tipo;
     private Integer quantidade;
-    private LocalDateTime dataHora;
+    private LocalDate dataHora;
 }

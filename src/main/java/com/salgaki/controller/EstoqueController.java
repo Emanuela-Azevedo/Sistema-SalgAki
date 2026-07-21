@@ -22,41 +22,70 @@ import java.util.List;
 public class EstoqueController {
 
     private final EstoqueService estoqueService;
-    private final ProdutoService produtoService;
 
     @PostMapping
-    public ResponseEntity<EstoqueResponseDTO> criar(@RequestBody @Valid EstoqueCreateDTO dto) {
+    public ResponseEntity<EstoqueResponseDTO> criar(
+            @RequestBody @Valid EstoqueCreateDTO dto) {
+
         Estoque estoque = estoqueService.criarEstoque(dto);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(EstoqueMapper.toDto(estoque));
     }
 
-
     @GetMapping("/{produtoId}")
-    public ResponseEntity<EstoqueResponseDTO> consultar(@PathVariable Long produtoId) {
-        Estoque estoque = estoqueService.consultarEstoque(produtoId);
-        return ResponseEntity.ok(EstoqueMapper.toDto(estoque));
+    public ResponseEntity<List<EstoqueResponseDTO>> consultar(
+            @PathVariable Long produtoId) {
+
+        return ResponseEntity.ok(
+                EstoqueMapper.toDtoList(
+                        estoqueService.consultarEstoque(produtoId)
+                )
+        );
     }
 
-    @PutMapping("/{produtoId}/entrada")
-    public ResponseEntity<EstoqueResponseDTO> entrada(@PathVariable Long produtoId,
-                                                      @RequestParam Integer quantidade, @RequestParam LocalDate dataValidade) {
-        Estoque estoque = estoqueService.adicionarEstoque(produtoId, quantidade,dataValidade);
-        return ResponseEntity.ok(EstoqueMapper.toDto(estoque));
+    @PostMapping("/{produtoId}/entrada")
+    public ResponseEntity<EstoqueResponseDTO> entrada(
+            @PathVariable Long produtoId,
+            @RequestParam Integer quantidade,
+            @RequestParam LocalDate dataValidade) {
+
+        Estoque lote = estoqueService.adicionarEstoque(
+                produtoId,
+                quantidade,
+                dataValidade
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(EstoqueMapper.toDto(lote));
     }
 
     @PutMapping("/{produtoId}/saida")
-    public ResponseEntity<EstoqueResponseDTO> saida(@PathVariable Long produtoId,
-                                                    @RequestParam Integer quantidade) {
-        Estoque estoque = estoqueService.removerEstoque(produtoId, quantidade);
-        return ResponseEntity.ok(EstoqueMapper.toDto(estoque));
+    public ResponseEntity<Void> saida(
+            @PathVariable Long produtoId,
+            @RequestParam Integer quantidade) {
+
+        estoqueService.removerEstoque(produtoId, quantidade);
+
+        return ResponseEntity.noContent().build();
     }
+
     @GetMapping("/baixo")
     public ResponseEntity<List<EstoqueResponseDTO>> listarEstoquesBaixos() {
+
         return ResponseEntity.ok(
                 EstoqueMapper.toDtoList(
                         estoqueService.listarEstoquesBaixos()
+                )
+        );
+    }
+    @GetMapping
+    public ResponseEntity<List<EstoqueResponseDTO>> listarTodos() {
+        return ResponseEntity.ok(
+                EstoqueMapper.toDtoList(
+                        estoqueService.listarTodos()
                 )
         );
     }

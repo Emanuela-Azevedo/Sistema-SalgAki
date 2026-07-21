@@ -9,6 +9,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,8 +23,8 @@ public class MovimentacaoController {
     @GetMapping("/{produtoId}/relatorio")
     public ResponseEntity<RelatorioMovimentacaoDTO> relatorio(
             @PathVariable Long produtoId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime de,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime ate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate de,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate ate) {
 
         RelatorioMovimentacaoDTO relatorio = movimentacaoService.gerarRelatorio(produtoId, de, ate);
 
@@ -40,8 +41,8 @@ public class MovimentacaoController {
     @GetMapping("/{produtoId}/detalhes")
     public ResponseEntity<List<MovimentacaoResponseDTO>> listarMovimentacoes(
             @PathVariable Long produtoId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime de,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime ate) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate de,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate ate) {
 
         List<MovimentacaoResponseDTO> movimentacoes = movimentacaoService.buscarMovimentacoes(produtoId, de, ate)
                 .stream()

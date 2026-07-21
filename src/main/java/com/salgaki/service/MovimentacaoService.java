@@ -6,8 +6,11 @@ import com.salgaki.dto.mapper.MovimentacaoMapper;
 import com.salgaki.model.MovimentacaoEstoque;
 import com.salgaki.model.TipoMovimentacao;
 import com.salgaki.repository.MovimentacaoRepository;
+import com.salgaki.service.exception.DataInvalidaException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,13 +20,13 @@ public class MovimentacaoService {
 
     private final MovimentacaoRepository movimentacaoEstoqueRepository;
 
-    public List<MovimentacaoEstoque> buscarMovimentacoes(Long produtoId, LocalDateTime de, LocalDateTime ate) {
+    public List<MovimentacaoEstoque> buscarMovimentacoes(Long produtoId, LocalDate de, LocalDate ate) {
         validarPeriodo(de, ate);
         return movimentacaoEstoqueRepository
                 .findByEstoqueProdutoIdAndDataMovimentacaoBetween(produtoId, de, ate);
     }
 
-    public RelatorioMovimentacaoDTO gerarRelatorio(Long produtoId, LocalDateTime de, LocalDateTime ate) {
+    public RelatorioMovimentacaoDTO gerarRelatorio(Long produtoId, LocalDate de, LocalDate ate) {
         validarPeriodo(de, ate);
 
         List<MovimentacaoEstoque> movimentacoes = buscarMovimentacoes(produtoId, de, ate);
@@ -54,9 +57,9 @@ public class MovimentacaoService {
         );
     }
 
-    private void validarPeriodo(LocalDateTime de, LocalDateTime ate) {
+    private void validarPeriodo(LocalDate de, LocalDate ate) {
         if (de.isAfter(ate)) {
-            throw new IllegalArgumentException("Data inicial não pode ser maior que a final");
+            throw new DataInvalidaException("Data inicial não pode ser maior que a final");
         }
     }
 }

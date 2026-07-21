@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -31,6 +32,6 @@ public class MovimentacaoEstoque {
     private TipoMovimentacao tipo; // ENTRADA ou SAIDA
 
     @Column(name = "data_movimentacao", nullable = false)
-    private LocalDateTime dataMovimentacao = LocalDateTime.now();
+    private LocalDate dataMovimentacao = LocalDate.now();
 
 }

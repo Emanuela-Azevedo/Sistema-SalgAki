@@ -10,14 +10,14 @@ import com.salgaki.repository.MovimentacaoRepository;
 import com.salgaki.repository.ProdutoRepository;
 import com.salgaki.service.exception.EntidadeNaoEncontradaException;
 import com.salgaki.service.exception.EstoqueInsuficienteException;
-import jakarta.validation.constraints.FutureOrPresent;
-import jakarta.validation.constraints.NotNull;
+import com.salgaki.service.exception.ValidadeInavalidaException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,88 +34,135 @@ public class EstoqueService {
                 .orElseThrow(() ->
                         new EntidadeNaoEncontradaException("Produto não encontrado."));
 
-        Estoque estoque = new Estoque();
-        estoque.setProduto(produto);
-        estoque.setQuantidade(0);
-        estoque.setDataValidade(dto.getDataValidade());
+        Estoque lote = new Estoque();
+        lote.setProduto(produto);
+        lote.setQuantidade(dto.getQuantidade());
+        lote.setDataValidade(dto.getDataValidade());
 
-        estoque = estoqueRepository.save(estoque);
-
-        if (dto.getQuantidade() > 0) {
-            adicionarEstoque(
-                    produto.getId(),
-                    dto.getQuantidade(),
-                    dto.getDataValidade()
-            );
-
-            estoque = consultarEstoque(produto.getId());
-        }
-
-        return estoque;
-    }
-
-
-    @Transactional
-    public Estoque adicionarEstoque(Long produtoId, Integer quantidade, LocalDate dataValidade) {
-
-        Estoque estoque = estoqueRepository.findByProdutoId(produtoId)
-                .orElseGet(() -> {
-                    Produto produto = produtoRepository.findById(produtoId)
-                            .orElseThrow(() ->
-                                    new EntidadeNaoEncontradaException("Produto não encontrado"));
-
-                    Estoque novo = new Estoque();
-                    novo.setProduto(produto);
-                    novo.setQuantidade(0);
-                    novo.setDataValidade(dataValidade);
-
-                    return estoqueRepository.save(novo);
-                });
-
-        estoque.setQuantidade(estoque.getQuantidade() + quantidade);
+        lote = estoqueRepository.save(lote);
 
         movimentacaoRepository.save(
                 new MovimentacaoEstoque(
                         null,
-                        estoque,
-                        quantidade,
+                        lote,
+                        dto.getQuantidade(),
                         TipoMovimentacao.ENTRADA,
-                        LocalDateTime.now()
+                        LocalDate.now()
                 )
         );
 
-        return estoqueRepository.save(estoque);
+        return lote;
     }
 
     @Transactional
-    public Estoque removerEstoque(Long produtoId, Integer quantidade) {
-        Estoque estoque = estoqueRepository.findByProdutoId(produtoId)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Estoque não encontrado para produto " + produtoId));
+    public Estoque adicionarEstoque(Long produtoId,
+                                    Integer quantidade,
+                                    LocalDate dataValidade) {
 
-        if (estoque.getQuantidade() < quantidade) {
-            throw new EstoqueInsuficienteException("Quantidade insuficiente em estoque");
+        if (dataValidade.isBefore(LocalDate.now())) {
+            throw new ValidadeInavalidaException(
+                    "A data de validade não pode ser menor que a data atual."
+            );
         }
 
-        estoque.setQuantidade(estoque.getQuantidade() - quantidade);
+        Produto produto = produtoRepository.findById(produtoId)
+                .orElseThrow(() ->
+                        new EntidadeNaoEncontradaException("Produto não encontrado."));
 
-        MovimentacaoEstoque movimentacao = new MovimentacaoEstoque(
-                null,
-                estoque,
-                quantidade,
-                TipoMovimentacao.SAIDA,
-                LocalDateTime.now()
+        Estoque lote = new Estoque();
+        lote.setProduto(produto);
+        lote.setQuantidade(quantidade);
+        lote.setDataValidade(dataValidade);
+
+        lote = estoqueRepository.save(lote);
+
+        movimentacaoRepository.save(
+                new MovimentacaoEstoque(
+                        null,
+                        lote,
+                        quantidade,
+                        TipoMovimentacao.ENTRADA,
+                        LocalDate.now()
+                )
         );
-        movimentacaoRepository.save(movimentacao);
 
-        return estoqueRepository.save(estoque);
+        return lote;
     }
 
-    public Estoque consultarEstoque(Long produtoId) {
-        return estoqueRepository.findByProdutoId(produtoId)
-                .orElseThrow(() -> new EntidadeNaoEncontradaException("Estoque não encontrado para produto " + produtoId));
+    @Transactional
+    public void removerEstoque(Long produtoId, Integer quantidade) {
+
+        List<Estoque> lotes =
+                estoqueRepository.findByProdutoIdOrderByDataValidadeAsc(produtoId);
+
+        if (lotes.isEmpty()) {
+            throw new EntidadeNaoEncontradaException("Produto sem estoque.");
+        }
+
+        int restante = quantidade;
+
+        for (Estoque lote : lotes) {
+
+            if (restante == 0)
+                break;
+
+            int disponivel = lote.getQuantidade();
+
+            if (disponivel == 0)
+                continue;
+
+            int retirada = Math.min(disponivel, restante);
+
+            lote.setQuantidade(disponivel - retirada);
+
+            movimentacaoRepository.save(
+                    new MovimentacaoEstoque(
+                            null,
+                            lote,
+                            retirada,
+                            TipoMovimentacao.SAIDA,
+                            LocalDate.now()
+                    )
+            );
+
+            estoqueRepository.save(lote);
+
+            restante -= retirada;
+        }
+
+        if (restante > 0) {
+            throw new EstoqueInsuficienteException(
+                    "Quantidade insuficiente em estoque."
+            );
+        }
     }
+
     public List<Estoque> listarEstoquesBaixos() {
-        return estoqueRepository.findByQuantidadeLessThan(5);
+
+        Map<Produto, Integer> totalPorProduto = estoqueRepository.findAll()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        Estoque::getProduto,
+                        Collectors.summingInt(Estoque::getQuantidade)
+                ));
+
+        return totalPorProduto.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() <= 5)
+                .map(entry -> {
+                    Estoque estoque = new Estoque();
+                    estoque.setProduto(entry.getKey());
+                    estoque.setQuantidade(entry.getValue());
+                    return estoque;
+                })
+                .toList();
     }
 
+    public List<Estoque> consultarEstoque(Long produtoId) {
+        return estoqueRepository.findByProdutoIdOrderByDataValidadeAsc(produtoId);
+    }
+
+    public List<Estoque> listarTodos() {
+        return estoqueRepository.findAll();
+    }
 }
