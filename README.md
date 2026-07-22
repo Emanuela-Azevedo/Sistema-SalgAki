@@ -117,20 +117,6 @@ Abra o projeto em uma IDE compatível (IntelliJ IDEA, Eclipse ou VS Code) e exec
 
 ---
 
-# 📸 Demonstração
-
-Adicione capturas de tela da aplicação.
-
-```text
-docs/
-├── tela-login.png
-├── tela-produtos.png
-├── tela-clientes.png
-└── tela-pedidos.png
-```
-
----
-
 # 📚 Aprendizados
 
 Este projeto permitiu desenvolver competências como:
