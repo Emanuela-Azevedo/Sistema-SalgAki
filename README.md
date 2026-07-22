@@ -166,7 +166,7 @@ Este projeto foi desenvolvido para fins acadêmicos como requisito da graduaçã
 # 👩‍💻 Desenvolvedoras
 
 **Emanuela Azevedo**
-**Luciana Farias**
+**e Luciana Farias**
 
 Graduanda em **Análise e Desenvolvimento de Sistemas**
 
